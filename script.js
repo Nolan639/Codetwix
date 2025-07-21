@@ -1,5 +1,6 @@
-// Text Converter Application
-// A comprehensive tool for converting between various text encodings and ciphers
+// ====================================
+// CODETWIX v2.0 - Advanced Text Converter
+// ====================================
 
 // DOM Elements
 const elements = {
@@ -9,25 +10,77 @@ const elements = {
     dropdownTrigger: document.getElementById('dropdownTrigger'),
     dropdownMenu: document.getElementById('dropdownMenu'),
     selectedOption: document.querySelector('.selected-option'),
+    
+    // Theme and Font Controls
+    themeSelector: document.getElementById('themeSelector'),
+    fontSelector: document.getElementById('fontSelector'),
+    
+    // Auto-Detection
+    detectedFormat: document.getElementById('detectedFormat'),
+    confidenceBar: document.getElementById('confidenceBar'),
+    confidenceText: document.getElementById('confidenceText'),
+    overrideDetection: document.getElementById('overrideDetection'),
+    
+    // Cipher Controls
     caesarControls: document.getElementById('caesarControls'),
     caesarShift: document.getElementById('caesarShift'),
     caesarDirection: document.getElementById('caesarDirection'),
+    showBruteForce: document.getElementById('showBruteForce'),
+    
+    vigenereControls: document.getElementById('vigenereControls'),
+    vigenereKey: document.getElementById('vigenereKey'),
+    vigenereDirection: document.getElementById('vigenereDirection'),
+    
+    affineControls: document.getElementById('affineControls'),
+    affineA: document.getElementById('affineA'),
+    affineB: document.getElementById('affineB'),
+    affineDirection: document.getElementById('affineDirection'),
+    
+    playfairControls: document.getElementById('playfairControls'),
+    playfairKey: document.getElementById('playfairKey'),
+    playfairDirection: document.getElementById('playfairDirection'),
+    showMatrix: document.getElementById('showMatrix'),
+    
+    xorControls: document.getElementById('xorControls'),
+    xorKey: document.getElementById('xorKey'),
+    xorDirection: document.getElementById('xorDirection'),
+    
+    // Panels
+    bruteForcePanel: document.getElementById('bruteForcePanel'),
+    bruteForceResults: document.getElementById('bruteForceResults'),
+    closeBruteForce: document.getElementById('closeBruteForce'),
+    matrixPanel: document.getElementById('matrixPanel'),
+    matrixDisplay: document.getElementById('matrixDisplay'),
+    closeMatrix: document.getElementById('closeMatrix'),
     
     // Input/Output
     inputText: document.getElementById('inputText'),
     outputText: document.getElementById('outputText'),
-    convertBtn: document.getElementById('convertBtn'),
-    btnText: document.querySelector('.btn-text'),
-    loadingSpinner: document.querySelector('.loading-spinner'),
+    inputStats: document.getElementById('inputStats'),
+    letterPercent: document.getElementById('letterPercent'),
+    numberPercent: document.getElementById('numberPercent'),
+    symbolPercent: document.getElementById('symbolPercent'),
+    asciiBreakdown: document.getElementById('asciiBreakdown'),
     
-    // Utility Buttons
+    // Tools
     copyBtn: document.getElementById('copyBtn'),
+    shareBtn: document.getElementById('shareBtn'),
+    qrBtn: document.getElementById('qrBtn'),
     downloadBtn: document.getElementById('downloadBtn'),
-    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
-    darkModeToggle: document.getElementById('darkModeToggle'),
     
     // History
     historyContainer: document.getElementById('historyContainer'),
+    clearHistoryBtn: document.getElementById('clearHistoryBtn'),
+    
+    // Modals
+    qrModal: document.getElementById('qrModal'),
+    qrCanvas: document.getElementById('qrCanvas'),
+    downloadQr: document.getElementById('downloadQr'),
+    closeQrModal: document.getElementById('closeQrModal'),
+    shareModal: document.getElementById('shareModal'),
+    shareLink: document.getElementById('shareLink'),
+    copyShareLink: document.getElementById('copyShareLink'),
+    closeShareModal: document.getElementById('closeShareModal'),
     
     // Toast
     toast: document.getElementById('toast'),
@@ -36,290 +89,522 @@ const elements = {
 
 // Application State
 const state = {
-    isDarkMode: localStorage.getItem('darkMode') === 'true',
-    history: JSON.parse(localStorage.getItem('conversionHistory') || '[]'),
-    isConverting: false
+    currentTheme: localStorage.getItem('codetwix-theme') || 'dark',
+    currentFont: localStorage.getItem('codetwix-font') || 'monospace',
+    history: JSON.parse(localStorage.getItem('codetwix-history') || '[]'),
+    favorites: new Set(JSON.parse(localStorage.getItem('codetwix-favorites') || '[]')),
+    autoDetectionEnabled: true,
+    debounceTimer: null
 };
 
-// Global variables
-let debounceTimer;
-
-// Morse Code Dictionary
-const MORSE_CODE = {
-    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
-    'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
-    'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
-    'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-    'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
-    '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
-    '8': '---..', '9': '----.', ' ': '/', '.': '.-.-.-', ',': '--..--',
-    '?': '..--..', "'": '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.',
-    ')': '-.--.-', '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-',
-    '+': '.-.-.', '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-',
-    '@': '.--.-.'
+// Conversion Functions Library
+const converters = {
+    // Basic Conversions
+    textToBinary: (text) => text.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(' '),
+    binaryToText: (binary) => {
+        const cleanBinary = binary.replace(/[^01\s]/g, '').trim();
+        if (!cleanBinary) throw new Error('Invalid binary input');
+        const binaryArray = cleanBinary.includes(' ') ? cleanBinary.split(/\s+/) : cleanBinary.match(/.{1,8}/g) || [];
+        return binaryArray.map(bin => String.fromCharCode(parseInt(bin, 2))).join('');
+    },
+    
+    textToMorse: (text) => {
+        const MORSE_CODE = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+            '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+            '8': '---..', '9': '----.', ' ': '/', '.': '.-.-.-', ',': '--..--',
+            '?': '..--..', "'": '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.',
+            ')': '-.--.-', '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-',
+            '+': '.-.-.', '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-',
+            '@': '.--.-.'
+        };
+        return text.toUpperCase().split('').map(char => MORSE_CODE[char] || char).join(' ');
+    },
+    
+    morseToText: (morse) => {
+        const REVERSE_MORSE = {
+            '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E', '..-.': 'F',
+            '--.': 'G', '....': 'H', '..': 'I', '.---': 'J', '-.-': 'K', '.-..': 'L',
+            '--': 'M', '-.': 'N', '---': 'O', '.--.': 'P', '--.-': 'Q', '.-.': 'R',
+            '...': 'S', '-': 'T', '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X',
+            '-.--': 'Y', '--..': 'Z', '/': ' '
+        };
+        return morse.split(' ').map(code => REVERSE_MORSE[code] || code).join('');
+    },
+    
+    textToHex: (text) => text.split('').map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').toUpperCase(),
+    hexToText: (hex) => {
+        const cleanHex = hex.replace(/[^0-9A-Fa-f\s]/g, '');
+        if (!cleanHex) throw new Error('Invalid hex input');
+        const hexArray = cleanHex.includes(' ') ? cleanHex.split(/\s+/) : cleanHex.match(/.{1,2}/g) || [];
+        return hexArray.map(h => String.fromCharCode(parseInt(h, 16))).join('');
+    },
+    
+    // Encoding & Decoding
+    textToBase64: (text) => btoa(unescape(encodeURIComponent(text))),
+    base64ToText: (base64) => {
+        try {
+            return decodeURIComponent(escape(atob(base64)));
+        } catch (error) {
+            throw new Error('Invalid Base64 input');
+        }
+    },
+    
+    textToBase32: (text) => {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        let bits = '';
+        for (let i = 0; i < text.length; i++) {
+            bits += text.charCodeAt(i).toString(2).padStart(8, '0');
+        }
+        let result = '';
+        for (let i = 0; i < bits.length; i += 5) {
+            const chunk = bits.substr(i, 5).padEnd(5, '0');
+            result += alphabet[parseInt(chunk, 2)];
+        }
+        return result;
+    },
+    
+    base32ToText: (base32) => {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        let bits = '';
+        for (let i = 0; i < base32.length; i++) {
+            const index = alphabet.indexOf(base32[i].toUpperCase());
+            if (index !== -1) {
+                bits += index.toString(2).padStart(5, '0');
+            }
+        }
+        let result = '';
+        for (let i = 0; i < bits.length; i += 8) {
+            const byte = bits.substr(i, 8);
+            if (byte.length === 8) {
+                result += String.fromCharCode(parseInt(byte, 2));
+            }
+        }
+        return result;
+    },
+    
+    textToBase58: (text) => {
+        if (!text) return '';
+        const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        const bytes = new TextEncoder().encode(text);
+        let num = BigInt(0);
+        for (let byte of bytes) {
+            num = num * BigInt(256) + BigInt(byte);
+        }
+        let result = '';
+        while (num > 0) {
+            result = alphabet[Number(num % BigInt(58))] + result;
+            num = num / BigInt(58);
+        }
+        return result || '1';
+    },
+    
+    base58ToText: (base58) => {
+        if (!base58) return '';
+        const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        let num = BigInt(0);
+        for (let char of base58) {
+            const index = alphabet.indexOf(char);
+            if (index === -1) throw new Error('Invalid Base58 character');
+            num = num * BigInt(58) + BigInt(index);
+        }
+        const bytes = [];
+        while (num > 0) {
+            bytes.unshift(Number(num % BigInt(256)));
+            num = num / BigInt(256);
+        }
+        return new TextDecoder().decode(new Uint8Array(bytes));
+    },
+    
+    urlEncode: (text) => encodeURIComponent(text),
+    urlDecode: (text) => {
+        try {
+            return decodeURIComponent(text);
+        } catch (error) {
+            throw new Error('Invalid URL encoded text');
+        }
+    },
+    
+    // Advanced Ciphers
+    caesarCipher: (text, shift, encrypt = true) => {
+        const direction = encrypt ? 1 : -1;
+        const actualShift = (shift * direction + 26) % 26;
+        return text.split('').map(char => {
+            if (char.match(/[a-z]/i)) {
+                const isUpperCase = char === char.toUpperCase();
+                const charCode = char.toLowerCase().charCodeAt(0);
+                const shifted = ((charCode - 97 + actualShift) % 26) + 97;
+                const result = String.fromCharCode(shifted);
+                return isUpperCase ? result.toUpperCase() : result;
+            }
+            return char;
+        }).join('');
+    },
+    
+    rot13: (text) => converters.caesarCipher(text, 13, true),
+    
+    vigenereCipher: (text, key, encrypt = true) => {
+        if (!key) throw new Error('Keyword required for Vigenère cipher');
+        const keyUpper = key.toUpperCase();
+        let keyIndex = 0;
+        return text.split('').map(char => {
+            if (char.match(/[a-z]/i)) {
+                const isUpperCase = char === char.toUpperCase();
+                const charCode = char.toUpperCase().charCodeAt(0) - 65;
+                const keyChar = keyUpper.charCodeAt(keyIndex % keyUpper.length) - 65;
+                const shifted = encrypt ? (charCode + keyChar) % 26 : (charCode - keyChar + 26) % 26;
+                keyIndex++;
+                const result = String.fromCharCode(shifted + 65);
+                return isUpperCase ? result : result.toLowerCase();
+            }
+            return char;
+        }).join('');
+    },
+    
+    affineCipher: (text, a, b, encrypt = true) => {
+        const modInverse = (a, m) => {
+            for (let i = 1; i < m; i++) {
+                if ((a * i) % m === 1) return i;
+            }
+            throw new Error('Invalid key A (no modular inverse)');
+        };
+        
+        return text.split('').map(char => {
+            if (char.match(/[a-z]/i)) {
+                const isUpperCase = char === char.toUpperCase();
+                const x = char.toUpperCase().charCodeAt(0) - 65;
+                let y;
+                if (encrypt) {
+                    y = (a * x + b) % 26;
+                } else {
+                    const aInv = modInverse(a, 26);
+                    y = (aInv * (x - b + 26)) % 26;
+                }
+                const result = String.fromCharCode(y + 65);
+                return isUpperCase ? result : result.toLowerCase();
+            }
+            return char;
+        }).join('');
+    },
+    
+    playfairCipher: (text, key, encrypt = true) => {
+        if (!key) throw new Error('Keyword required for Playfair cipher');
+        
+        // Create 5x5 matrix
+        const createMatrix = (key) => {
+            const alphabet = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'; // J is combined with I
+            const used = new Set();
+            const matrix = [];
+            
+            // Add key letters first
+            for (let char of key.toUpperCase()) {
+                if (char === 'J') char = 'I';
+                if (alphabet.includes(char) && !used.has(char)) {
+                    matrix.push(char);
+                    used.add(char);
+                }
+            }
+            
+            // Add remaining letters
+            for (let char of alphabet) {
+                if (!used.has(char)) {
+                    matrix.push(char);
+                }
+            }
+            
+            // Convert to 5x5 grid
+            const grid = [];
+            for (let i = 0; i < 5; i++) {
+                grid.push(matrix.slice(i * 5, (i + 1) * 5));
+            }
+            return grid;
+        };
+        
+        const matrix = createMatrix(key);
+        
+        // Find position of character in matrix
+        const findPos = (char) => {
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 5; j++) {
+                    if (matrix[i][j] === char) return [i, j];
+                }
+            }
+            return null;
+        };
+        
+        // Prepare text
+        let cleanText = text.toUpperCase().replace(/[^A-Z]/g, '').replace(/J/g, 'I');
+        let pairs = [];
+        
+        for (let i = 0; i < cleanText.length; i += 2) {
+            let first = cleanText[i];
+            let second = cleanText[i + 1] || 'X';
+            if (first === second) {
+                second = 'X';
+                i--; // Process the repeated character again
+            }
+            pairs.push([first, second]);
+        }
+        
+        // Encrypt/decrypt pairs
+        let result = '';
+        for (let [a, b] of pairs) {
+            const [row1, col1] = findPos(a);
+            const [row2, col2] = findPos(b);
+            
+            if (row1 === row2) {
+                // Same row
+                if (encrypt) {
+                    result += matrix[row1][(col1 + 1) % 5] + matrix[row2][(col2 + 1) % 5];
+                } else {
+                    result += matrix[row1][(col1 + 4) % 5] + matrix[row2][(col2 + 4) % 5];
+                }
+            } else if (col1 === col2) {
+                // Same column
+                if (encrypt) {
+                    result += matrix[(row1 + 1) % 5][col1] + matrix[(row2 + 1) % 5][col2];
+                } else {
+                    result += matrix[(row1 + 4) % 5][col1] + matrix[(row2 + 4) % 5][col2];
+                }
+            } else {
+                // Rectangle
+                result += matrix[row1][col2] + matrix[row2][col1];
+            }
+        }
+        
+        return result;
+    },
+    
+    xorEncryption: (text, key) => {
+        if (!key) throw new Error('Key required for XOR encryption');
+        return text.split('').map((char, i) => {
+            const textCode = char.charCodeAt(0);
+            const keyCode = key.charCodeAt(i % key.length);
+            return String.fromCharCode(textCode ^ keyCode);
+        }).join('');
+    }
 };
 
-// Reverse Morse Code Dictionary
-const REVERSE_MORSE = Object.fromEntries(
-    Object.entries(MORSE_CODE).map(([k, v]) => [v, k])
-);
-
-// ===================
-// CONVERSION FUNCTIONS
-// ===================
-
-/**
- * Convert text to binary representation
- */
-function textToBinary(text) {
-    return text.split('').map(char => 
-        char.charCodeAt(0).toString(2).padStart(8, '0')
-    ).join(' ');
-}
-
-/**
- * Convert binary to text
- */
-function binaryToText(binary) {
-    // Clean up binary string (remove extra spaces, non-binary characters)
-    const cleanBinary = binary.replace(/[^01\s]/g, '').trim();
+// Auto-Detection Functions
+const autoDetector = {
+    detectFormat: (text) => {
+        if (!text.trim()) return { format: 'None', confidence: 0 };
+        
+        const detections = [
+            { format: 'Binary', confidence: autoDetector.isBinary(text) },
+            { format: 'Base64', confidence: autoDetector.isBase64(text) },
+            { format: 'Hexadecimal', confidence: autoDetector.isHex(text) },
+            { format: 'Morse Code', confidence: autoDetector.isMorse(text) },
+            { format: 'URL Encoded', confidence: autoDetector.isUrlEncoded(text) },
+            { format: 'ROT13', confidence: autoDetector.isRot13(text) }
+        ];
+        
+        const best = detections.reduce((a, b) => a.confidence > b.confidence ? a : b);
+        return best.confidence > 0.5 ? best : { format: 'Plain Text', confidence: 0.8 };
+    },
     
-    if (!cleanBinary) {
-        throw new Error('Invalid binary input');
-    }
+    isBinary: (text) => {
+        const cleaned = text.replace(/\s/g, '');
+        if (!/^[01]+$/.test(cleaned)) return 0;
+        return cleaned.length % 8 === 0 ? 0.9 : 0.7;
+    },
     
-    // Split by spaces or every 8 characters if no spaces
-    let binaryArray;
-    if (cleanBinary.includes(' ')) {
-        binaryArray = cleanBinary.split(/\s+/);
-    } else {
-        binaryArray = cleanBinary.match(/.{1,8}/g) || [];
-    }
-    
-    return binaryArray.map(bin => {
-        const decimal = parseInt(bin, 2);
-        if (isNaN(decimal)) {
-            throw new Error('Invalid binary sequence');
+    isBase64: (text) => {
+        try {
+            const cleaned = text.replace(/\s/g, '');
+            if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned)) return 0;
+            atob(cleaned);
+            return 0.9;
+        } catch {
+            return 0;
         }
-        return String.fromCharCode(decimal);
-    }).join('');
-}
-
-/**
- * Convert text to Morse code
- */
-function textToMorse(text) {
-    return text.toUpperCase().split('').map(char => {
-        return MORSE_CODE[char] || char;
-    }).join(' ');
-}
-
-/**
- * Convert Morse code to text
- */
-function morseToText(morse) {
-    return morse.split(' ').map(code => {
-        return REVERSE_MORSE[code] || code;
-    }).join('');
-}
-
-/**
- * Convert text to Base64
- */
-function textToBase64(text) {
-    try {
-        return btoa(unescape(encodeURIComponent(text)));
-    } catch (error) {
-        throw new Error('Failed to encode to Base64');
-    }
-}
-
-/**
- * Convert Base64 to text
- */
-function base64ToText(base64) {
-    try {
-        return decodeURIComponent(escape(atob(base64)));
-    } catch (error) {
-        throw new Error('Invalid Base64 input');
-    }
-}
-
-/**
- * Convert text to hexadecimal
- */
-function textToHex(text) {
-    return text.split('').map(char => 
-        char.charCodeAt(0).toString(16).padStart(2, '0')
-    ).join(' ').toUpperCase();
-}
-
-/**
- * Convert hexadecimal to text
- */
-function hexToText(hex) {
-    // Clean hex input
-    const cleanHex = hex.replace(/[^0-9A-Fa-f\s]/g, '');
+    },
     
-    if (!cleanHex) {
-        throw new Error('Invalid hexadecimal input');
-    }
+    isHex: (text) => {
+        const cleaned = text.replace(/\s/g, '');
+        if (!/^[0-9A-Fa-f]+$/.test(cleaned)) return 0;
+        return cleaned.length % 2 === 0 ? 0.9 : 0.7;
+    },
     
-    // Split by spaces or every 2 characters
-    let hexArray;
-    if (cleanHex.includes(' ')) {
-        hexArray = cleanHex.split(/\s+/);
-    } else {
-        hexArray = cleanHex.match(/.{1,2}/g) || [];
-    }
+    isMorse: (text) => {
+        const morsePattern = /^[.\-\s\/]+$/;
+        return morsePattern.test(text) ? 0.8 : 0;
+    },
     
-    return hexArray.map(hex => {
-        const decimal = parseInt(hex, 16);
-        if (isNaN(decimal)) {
-            throw new Error('Invalid hex sequence');
+    isUrlEncoded: (text) => {
+        const urlPattern = /%[0-9A-Fa-f]{2}/;
+        return urlPattern.test(text) ? 0.8 : 0;
+    },
+    
+    isRot13: (text) => {
+        // Simple heuristic: check if decoding ROT13 produces more common English words
+        const decoded = converters.rot13(text);
+        const commonWords = ['the', 'and', 'you', 'that', 'was', 'for', 'are', 'with', 'his', 'they'];
+        const matches = commonWords.filter(word => decoded.toLowerCase().includes(word)).length;
+        return matches > 0 ? Math.min(matches * 0.2, 0.8) : 0;
+    }
+};
+
+// Text Analysis Functions
+const textAnalyzer = {
+    getStats: (text) => {
+        const chars = text.length;
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const bits = chars * 8;
+        
+        let letters = 0, numbers = 0, symbols = 0;
+        for (let char of text) {
+            if (/[a-zA-Z]/.test(char)) letters++;
+            else if (/[0-9]/.test(char)) numbers++;
+            else symbols++;
         }
-        return String.fromCharCode(decimal);
-    }).join('');
-}
-
-/**
- * Caesar cipher implementation
- */
-function caesarCipher(text, shift, encrypt = true) {
-    const direction = encrypt ? 1 : -1;
-    const actualShift = (shift * direction + 26) % 26;
+        
+        const total = letters + numbers + symbols || 1;
+        return {
+            chars,
+            words,
+            bits,
+            letterPercent: Math.round((letters / total) * 100),
+            numberPercent: Math.round((numbers / total) * 100),
+            symbolPercent: Math.round((symbols / total) * 100)
+        };
+    },
     
-    return text.split('').map(char => {
-        if (char.match(/[a-z]/i)) {
-            const isUpperCase = char === char.toUpperCase();
-            const charCode = char.toLowerCase().charCodeAt(0);
-            const shifted = ((charCode - 97 + actualShift) % 26) + 97;
-            const result = String.fromCharCode(shifted);
-            return isUpperCase ? result.toUpperCase() : result;
+    getAsciiBreakdown: (text) => {
+        const breakdown = {};
+        for (let char of text) {
+            const ascii = char.charCodeAt(0);
+            const hex = ascii.toString(16).toUpperCase().padStart(2, '0');
+            const binary = ascii.toString(2).padStart(8, '0');
+            breakdown[char] = { ascii, hex, binary };
         }
-        return char;
-    }).join('');
-}
-
-/**
- * ROT13 cipher (special case of Caesar cipher)
- */
-function rot13(text) {
-    return caesarCipher(text, 13, true);
-}
-
-// ===================
-// UI HELPER FUNCTIONS
-// ===================
-
-/**
- * Show toast notification
- */
-function showToast(message, type = 'success') {
-    elements.toastMessage.textContent = message;
-    elements.toast.className = `toast ${type} show`;
-    
-    setTimeout(() => {
-        elements.toast.classList.remove('show');
-    }, 3000);
-}
-
-/**
- * Update placeholder text based on current mode
- */
-function updatePlaceholder() {
-    const mode = elements.conversionMode.value;
-    const placeholders = {
-        textToBinary: 'Enter text to convert to binary...',
-        binaryToText: 'Enter binary code (e.g., 01001000 01100101 01101100 01101100 01101111)',
-        textToMorse: 'Enter text to convert to Morse code...',
-        morseToText: 'Enter Morse code (e.g., .... . .-.. .-.. ---)',
-        textToBase64: 'Enter text to encode in Base64...',
-        base64ToText: 'Enter Base64 encoded text to decode...',
-        textToHex: 'Enter text to convert to hexadecimal...',
-        hexToText: 'Enter hexadecimal values (e.g., 48 65 6C 6C 6F)',
-        caesarCipher: 'Enter text to encrypt/decrypt with Caesar cipher...',
-        rot13: 'Enter text to apply ROT13 cipher...'
-    };
-    
-    elements.inputText.placeholder = placeholders[mode] || 'Enter your text here...';
-}
-
-/**
- * Toggle Caesar cipher controls visibility
- */
-function toggleCaesarControls() {
-    const mode = elements.conversionMode.value;
-    elements.caesarControls.style.display = mode === 'caesarCipher' ? 'flex' : 'none';
-}
-
-/**
- * Toggle loading state
- */
-function setLoadingState(isLoading) {
-    state.isConverting = isLoading;
-    elements.btnText.style.display = isLoading ? 'none' : 'inline';
-    elements.loadingSpinner.style.display = isLoading ? 'block' : 'none';
-    elements.convertBtn.disabled = isLoading;
-}
-
-/**
- * Add conversion to history
- */
-function addToHistory(mode, input, output) {
-    const historyItem = {
-        mode: mode,
-        input: input.substring(0, 100), // Truncate for storage
-        output: output.substring(0, 100),
-        timestamp: new Date().toLocaleString()
-    };
-    
-    // Add to beginning of array
-    state.history.unshift(historyItem);
-    
-    // Keep only last 10 items
-    if (state.history.length > 10) {
-        state.history = state.history.slice(0, 10);
+        return breakdown;
     }
-    
-    // Save to localStorage
-    localStorage.setItem('conversionHistory', JSON.stringify(state.history));
-    
-    // Update UI
-    renderHistory();
-}
+};
 
-/**
- * Render history items
- */
-function renderHistory() {
-    if (state.history.length === 0) {
-        elements.historyContainer.innerHTML = '<p class="no-history">No recent conversions</p>';
-        return;
+// Theme Management
+const themeManager = {
+    setTheme: (theme) => {
+        document.body.setAttribute('data-theme', theme);
+        state.currentTheme = theme;
+        localStorage.setItem('codetwix-theme', theme);
+        elements.themeSelector.value = theme;
+    },
+    
+    setFont: (font) => {
+        document.body.setAttribute('data-font', font);
+        state.currentFont = font;
+        localStorage.setItem('codetwix-font', font);
+        elements.fontSelector.value = font;
     }
+};
+
+// History Management
+const historyManager = {
+    add: (mode, input, output) => {
+        const item = {
+            id: Date.now(),
+            mode,
+            input: input.substring(0, 200),
+            output: output.substring(0, 200),
+            timestamp: new Date().toLocaleString(),
+            favorite: false
+        };
+        
+        state.history.unshift(item);
+        if (state.history.length > 10) {
+            state.history = state.history.slice(0, 10);
+        }
+        
+        localStorage.setItem('codetwix-history', JSON.stringify(state.history));
+        historyManager.render();
+    },
     
-    const historyHTML = state.history.map(item => `
-        <div class="history-item" data-input="${escapeHtml(item.input)}" data-output="${escapeHtml(item.output)}">
-            <div class="history-mode">${getModeDisplayName(item.mode)}</div>
-            <div class="history-preview">${escapeHtml(item.input)}</div>
-            <div class="history-timestamp">${item.timestamp}</div>
-        </div>
-    `).join('');
+    render: () => {
+        if (state.history.length === 0) {
+            elements.historyContainer.innerHTML = '<p class="no-history">No recent conversions</p>';
+            return;
+        }
+        
+        const historyHTML = state.history.map(item => `
+            <div class="history-item" data-id="${item.id}">
+                <div class="history-item-header">
+                    <div class="history-mode">${getModeDisplayName(item.mode)}</div>
+                    <div class="history-actions">
+                        <button class="history-btn star-btn ${state.favorites.has(item.id) ? 'starred' : ''}" 
+                                onclick="historyManager.toggleFavorite(${item.id})" title="Star">⭐</button>
+                        <button class="history-btn copy-btn" 
+                                onclick="historyManager.copyItem(${item.id})" title="Copy">📋</button>
+                    </div>
+                </div>
+                <div class="history-preview" onclick="historyManager.loadItem(${item.id})">${escapeHtml(item.input)}</div>
+                <div class="history-timestamp">${item.timestamp}</div>
+            </div>
+        `).join('');
+        
+        elements.historyContainer.innerHTML = historyHTML;
+    },
     
-    elements.historyContainer.innerHTML = historyHTML;
+    loadItem: (id) => {
+        const item = state.history.find(h => h.id === id);
+        if (item) {
+            elements.inputText.value = item.input;
+            elements.outputText.value = item.output;
+            // Set the correct mode
+            const modeOption = elements.dropdownMenu.querySelector(`[data-value="${item.mode}"]`);
+            if (modeOption) {
+                selectOption(modeOption);
+            }
+        }
+    },
     
-    // Add click listeners to history items
-    elements.historyContainer.querySelectorAll('.history-item').forEach(item => {
-        item.addEventListener('click', () => {
-            elements.inputText.value = item.dataset.input;
-            elements.outputText.value = item.dataset.output;
+    copyItem: (id) => {
+        const item = state.history.find(h => h.id === id);
+        if (item) {
+            copyToClipboard(item.output);
+        }
+    },
+    
+    toggleFavorite: (id) => {
+        if (state.favorites.has(id)) {
+            state.favorites.delete(id);
+        } else {
+            state.favorites.add(id);
+        }
+        localStorage.setItem('codetwix-favorites', JSON.stringify([...state.favorites]));
+        historyManager.render();
+    },
+    
+    clear: () => {
+        const historyItems = elements.historyContainer.querySelectorAll('.history-item');
+        historyItems.forEach((item, index) => {
+            setTimeout(() => {
+                item.style.animation = 'fadeOutRight 0.4s ease-out forwards';
+            }, index * 100);
         });
-    });
+        
+        setTimeout(() => {
+            state.history = [];
+            state.favorites.clear();
+            localStorage.removeItem('codetwix-history');
+            localStorage.removeItem('codetwix-favorites');
+            historyManager.render();
+            showToast('History cleared! 🧹', 'success');
+        }, (historyItems.length * 100) + 400);
+    }
+};
+
+// Utility Functions
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-/**
- * Get display name for conversion mode
- */
 function getModeDisplayName(mode) {
     const names = {
         textToBinary: 'Text → Binary',
@@ -328,88 +613,320 @@ function getModeDisplayName(mode) {
         morseToText: 'Morse → Text',
         textToBase64: 'Text → Base64',
         base64ToText: 'Base64 → Text',
+        textToBase32: 'Text → Base32',
+        base32ToText: 'Base32 → Text',
+        textToBase58: 'Text → Base58',
+        base58ToText: 'Base58 → Text',
         textToHex: 'Text → Hex',
         hexToText: 'Hex → Text',
+        urlEncode: 'URL Encode',
+        urlDecode: 'URL Decode',
         caesarCipher: 'Caesar Cipher',
-        rot13: 'ROT13'
+        rot13: 'ROT13',
+        vigenereCipher: 'Vigenère Cipher',
+        affineCipher: 'Affine Cipher',
+        playfairCipher: 'Playfair Cipher',
+        xorEncryption: 'XOR Encryption'
     };
     return names[mode] || mode;
 }
 
-/**
- * Escape HTML for safe display
- */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+function showToast(message, type = 'success') {
+    elements.toastMessage.textContent = message;
+    elements.toast.className = `toast ${type} show`;
+    setTimeout(() => elements.toast.classList.remove('show'), 3000);
 }
 
-/**
- * Clear all history with animation
- */
-function clearHistory() {
-    const historyItems = elements.historyContainer.querySelectorAll('.history-item');
+// Conversion Logic
+function performConversion() {
+    const input = elements.inputText.value;
+    const mode = elements.conversionMode.value;
     
-    if (historyItems.length === 0) {
-        showToast('No history to clear', 'error');
+    if (!input.trim()) {
+        elements.outputText.value = '';
+        updateStats('');
         return;
     }
     
-    // Animate out each history item
-    historyItems.forEach((item, index) => {
-        setTimeout(() => {
-            item.style.animation = 'fadeOutRight 0.4s ease-out forwards';
-        }, index * 100);
+    try {
+        let output = '';
+        
+        // Get additional parameters for specific ciphers
+        switch (mode) {
+            case 'caesarCipher':
+                const shift = parseInt(elements.caesarShift.value) || 0;
+                const isEncrypt = elements.caesarDirection.dataset.direction === 'encrypt';
+                output = converters.caesarCipher(input, shift, isEncrypt);
+                break;
+            case 'vigenereCipher':
+                const vigenereKey = elements.vigenereKey.value;
+                const vigenereEncrypt = elements.vigenereDirection.dataset.direction === 'encrypt';
+                output = converters.vigenereCipher(input, vigenereKey, vigenereEncrypt);
+                break;
+            case 'affineCipher':
+                const a = parseInt(elements.affineA.value) || 5;
+                const b = parseInt(elements.affineB.value) || 8;
+                const affineEncrypt = elements.affineDirection.dataset.direction === 'encrypt';
+                output = converters.affineCipher(input, a, b, affineEncrypt);
+                break;
+            case 'playfairCipher':
+                const playfairKey = elements.playfairKey.value;
+                const playfairEncrypt = elements.playfairDirection.dataset.direction === 'encrypt';
+                output = converters.playfairCipher(input, playfairKey, playfairEncrypt);
+                break;
+            case 'xorEncryption':
+                const xorKey = elements.xorKey.value;
+                output = converters.xorEncryption(input, xorKey);
+                break;
+            default:
+                if (converters[mode]) {
+                    output = converters[mode](input);
+                } else {
+                    throw new Error('Unknown conversion mode');
+                }
+        }
+        
+        elements.outputText.value = output;
+        historyManager.add(mode, input, output);
+        updateStats(input);
+        updateAsciiBreakdown(mode, input);
+        
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+        elements.outputText.value = '';
+    }
+}
+
+// UI Update Functions
+function updateStats(text) {
+    const stats = textAnalyzer.getStats(text);
+    
+    const statsElements = elements.inputStats.querySelectorAll('.stat');
+    if (statsElements.length >= 3) {
+        statsElements[0].textContent = `${stats.chars} chars`;
+        statsElements[1].textContent = `${stats.words} words`;
+        statsElements[2].textContent = `${stats.bits} bits`;
+    }
+    
+    elements.letterPercent.textContent = `${stats.letterPercent}%`;
+    elements.numberPercent.textContent = `${stats.numberPercent}%`;
+    elements.symbolPercent.textContent = `${stats.symbolPercent}%`;
+}
+
+function updateAsciiBreakdown(mode, text) {
+    if (mode === 'textToBinary' || mode === 'textToHex') {
+        const breakdown = textAnalyzer.getAsciiBreakdown(text);
+        const breakdownHTML = Object.entries(breakdown).map(([char, data]) => 
+            `<div>${char}: ASCII ${data.ascii}, Hex ${data.hex}, Binary ${data.binary}</div>`
+        ).join('');
+        elements.asciiBreakdown.innerHTML = breakdownHTML;
+        elements.asciiBreakdown.style.display = 'block';
+    } else {
+        elements.asciiBreakdown.style.display = 'none';
+    }
+}
+
+function updateAutoDetection() {
+    if (!state.autoDetectionEnabled) return;
+    
+    const input = elements.inputText.value;
+    const detection = autoDetector.detectFormat(input);
+    
+    elements.detectedFormat.textContent = detection.format;
+    elements.confidenceBar.style.setProperty('--confidence', `${detection.confidence * 100}%`);
+    elements.confidenceText.textContent = `${Math.round(detection.confidence * 100)}%`;
+    
+    if (detection.confidence > 0.7 && detection.format !== 'Plain Text') {
+        elements.overrideDetection.style.display = 'inline-block';
+        elements.overrideDetection.onclick = () => autoSwitchMode(detection.format);
+    } else {
+        elements.overrideDetection.style.display = 'none';
+    }
+}
+
+function autoSwitchMode(detectedFormat) {
+    const modeMap = {
+        'Binary': 'binaryToText',
+        'Base64': 'base64ToText',
+        'Hexadecimal': 'hexToText',
+        'Morse Code': 'morseToText',
+        'URL Encoded': 'urlDecode',
+        'ROT13': 'rot13'
+    };
+    
+    const mode = modeMap[detectedFormat];
+    if (mode) {
+        const option = elements.dropdownMenu.querySelector(`[data-value="${mode}"]`);
+        if (option) {
+            selectOption(option);
+            performConversion();
+        }
+    }
+}
+
+// Dropdown Management
+function initializeCustomDropdown() {
+    if (!elements.dropdownTrigger || !elements.dropdownMenu) return;
+    
+    let isOpen = false;
+    
+    elements.dropdownTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown();
     });
     
-    // Clear data and update UI after animation
-    setTimeout(() => {
-        state.history = [];
-        localStorage.removeItem('conversionHistory');
-        renderHistory();
-        showToast('History cleared! 🧹', 'success');
-    }, (historyItems.length * 100) + 400);
-}
-
-/**
- * Toggle dark mode
- */
-function toggleDarkMode() {
-    state.isDarkMode = !state.isDarkMode;
-    document.documentElement.setAttribute('data-theme', state.isDarkMode ? 'dark' : 'light');
-    localStorage.setItem('darkMode', state.isDarkMode.toString());
+    elements.dropdownMenu.addEventListener('click', (e) => {
+        if (e.target.classList.contains('dropdown-option')) {
+            selectOption(e.target);
+        }
+    });
     
-    // Update dark mode icon
-    const icon = elements.darkModeToggle.querySelector('span');
-    icon.textContent = state.isDarkMode ? '☀️' : '🌙';
+    document.addEventListener('click', (e) => {
+        if (!elements.customDropdown.contains(e.target) && isOpen) {
+            closeDropdown();
+        }
+    });
+    
+    function toggleDropdown() {
+        isOpen ? closeDropdown() : openDropdown();
+    }
+    
+    function openDropdown() {
+        isOpen = true;
+        elements.dropdownTrigger.classList.add('active');
+        elements.dropdownMenu.classList.add('show');
+    }
+    
+    function closeDropdown() {
+        isOpen = false;
+        elements.dropdownTrigger.classList.remove('active');
+        elements.dropdownMenu.classList.remove('show');
+    }
+    
+    window.selectOption = function(option) {
+        const value = option.dataset.value;
+        const text = option.textContent;
+        
+        elements.selectedOption.textContent = text;
+        elements.conversionMode.value = value;
+        
+        elements.dropdownMenu.querySelectorAll('.dropdown-option').forEach(opt => 
+            opt.classList.remove('selected'));
+        option.classList.add('selected');
+        
+        closeDropdown();
+        toggleCipherControls();
+        performConversion();
+    };
+    
+    // Initialize first option
+    const firstOption = elements.dropdownMenu.querySelector('.dropdown-option');
+    if (firstOption) {
+        firstOption.classList.add('selected');
+    }
 }
 
-/**
- * Copy text to clipboard
- */
-async function copyToClipboard() {
-    const text = elements.outputText.value;
-    if (!text) {
+function toggleCipherControls() {
+    const mode = elements.conversionMode.value;
+    
+    // Hide all controls first
+    [elements.caesarControls, elements.vigenereControls, elements.affineControls, 
+     elements.playfairControls, elements.xorControls].forEach(el => {
+        if (el) el.style.display = 'none';
+    });
+    
+    // Show relevant controls
+    const controlMap = {
+        caesarCipher: elements.caesarControls,
+        vigenereCipher: elements.vigenereControls,
+        affineCipher: elements.affineControls,
+        playfairCipher: elements.playfairControls,
+        xorEncryption: elements.xorControls
+    };
+    
+    if (controlMap[mode]) {
+        controlMap[mode].style.display = 'flex';
+    }
+}
+
+// Advanced Features
+function generateBruteForce() {
+    const input = elements.inputText.value;
+    if (!input) return;
+    
+    let resultsHTML = '';
+    for (let shift = 1; shift <= 25; shift++) {
+        const result = converters.caesarCipher(input, shift, false);
+        const escapedResult = result.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        resultsHTML += `
+            <div class="brute-force-item" onclick="selectBruteForceResult('${escapedResult}')">
+                <span>Shift ${shift}:</span>
+                <span>${escapeHtml(result.substring(0, 50))}${result.length > 50 ? '...' : ''}</span>
+            </div>
+        `;
+    }
+    elements.bruteForceResults.innerHTML = resultsHTML;
+    elements.bruteForcePanel.style.display = 'block';
+}
+
+function selectBruteForceResult(result) {
+    elements.outputText.value = result.replace(/\\'/g, "'").replace(/\\"/g, '"'); // Fix escaped quotes
+    elements.bruteForcePanel.style.display = 'none';
+}
+
+function generatePlayfairMatrix() {
+    const key = elements.playfairKey.value;
+    if (!key) {
+        showToast('Please enter a keyword first', 'error');
+        return;
+    }
+    
+    // Generate matrix logic (simplified)
+    const alphabet = 'ABCDEFGHIKLMNOPQRSTUVWXYZ';
+    const used = new Set();
+    const matrix = [];
+    
+    for (let char of key.toUpperCase()) {
+        if (char === 'J') char = 'I';
+        if (alphabet.includes(char) && !used.has(char)) {
+            matrix.push(char);
+            used.add(char);
+        }
+    }
+    
+    for (let char of alphabet) {
+        if (!used.has(char)) {
+            matrix.push(char);
+        }
+    }
+    
+    let matrixHTML = '<div class="playfair-matrix">';
+    for (let i = 0; i < 25; i++) {
+        matrixHTML += `<div class="matrix-cell">${matrix[i]}</div>`;
+    }
+    matrixHTML += '</div>';
+    
+    elements.matrixDisplay.innerHTML = matrixHTML;
+    elements.matrixPanel.style.display = 'block';
+}
+
+// Download and Share Functions
+async function copyToClipboard(text = null) {
+    const textToCopy = text || elements.outputText.value;
+    if (!textToCopy) {
         showToast('Nothing to copy', 'error');
         return;
     }
     
     try {
-        await navigator.clipboard.writeText(text);
-        showToast('Copied to clipboard!', 'success');
+        await navigator.clipboard.writeText(textToCopy);
+        showToast('Copied to clipboard! 📋', 'success');
     } catch (err) {
-        // Fallback for older browsers
-        elements.outputText.select();
-        document.execCommand('copy');
-        showToast('Copied to clipboard!', 'success');
+        showToast('Copy failed', 'error');
     }
 }
 
-/**
- * Download output as text file
- */
-function downloadAsFile() {
+function downloadFile(format) {
     const text = elements.outputText.value;
     if (!text) {
         showToast('Nothing to download', 'error');
@@ -417,447 +934,241 @@ function downloadAsFile() {
     }
     
     const mode = getModeDisplayName(elements.conversionMode.value);
-    const filename = `converted-${mode.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}.txt`;
+    let content, mimeType, extension;
     
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
+    switch (format) {
+        case 'txt':
+            content = text;
+            mimeType = 'text/plain';
+            extension = 'txt';
+            break;
+        case 'csv':
+            content = `"Input","Output","Mode","Timestamp"\n"${elements.inputText.value}","${text}","${mode}","${new Date().toLocaleString()}"`;
+            mimeType = 'text/csv';
+            extension = 'csv';
+            break;
+        case 'json':
+            content = JSON.stringify({
+                input: elements.inputText.value,
+                output: text,
+                mode: mode,
+                timestamp: new Date().toISOString()
+            }, null, 2);
+            mimeType = 'application/json';
+            extension = 'json';
+            break;
+    }
     
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
+    a.download = `codetwix-${mode.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}.${extension}`;
     a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url);
     
-    showToast('File downloaded!', 'success');
+    showToast(`Downloaded as ${extension.toUpperCase()}! 📥`, 'success');
 }
 
-// ===================
-// MAIN CONVERSION LOGIC
-// ===================
-
-/**
- * Perform the selected conversion
- */
-async function performConversion() {
-    const input = elements.inputText.value.trim();
-    const mode = elements.conversionMode.value;
+function generateShareLink() {
+    const data = {
+        input: elements.inputText.value,
+        mode: elements.conversionMode.value,
+        timestamp: Date.now()
+    };
     
-    if (!input) {
-        showToast('Please enter some text to convert', 'error');
+    const encoded = btoa(JSON.stringify(data));
+    const shareUrl = `${window.location.origin}${window.location.pathname}?share=${encoded}`;
+    
+    elements.shareLink.value = shareUrl;
+    elements.shareModal.style.display = 'flex';
+}
+
+function generateQRCode() {
+    const text = elements.outputText.value;
+    if (!text) {
+        showToast('Nothing to encode in QR', 'error');
         return;
     }
     
-    setLoadingState(true);
+    if (!elements.qrCanvas) {
+        showToast('QR Canvas not available', 'error');
+        return;
+    }
     
-    // Add small delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Simple QR code generation (you might want to use a library like qrcode.js)
+    const canvas = elements.qrCanvas;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        showToast('Canvas context not available', 'error');
+        return;
+    }
+    
+    canvas.width = 200;
+    canvas.height = 200;
+    
+    // Placeholder QR code pattern
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 200, 200);
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px monospace';
+    ctx.fillText('QR Code for:', 10, 20);
+    ctx.fillText(text.substring(0, 20), 10, 40);
+    ctx.fillText('(Use QR library)', 10, 180);
+    
+    elements.qrModal.style.display = 'flex';
+}
+
+function downloadQRImage() {
+    if (!elements.qrCanvas) {
+        showToast('No QR code to download', 'error');
+        return;
+    }
     
     try {
-        let output = '';
-        
-        switch (mode) {
-            case 'textToBinary':
-                output = textToBinary(input);
-                break;
-            case 'binaryToText':
-                output = binaryToText(input);
-                break;
-            case 'textToMorse':
-                output = textToMorse(input);
-                break;
-            case 'morseToText':
-                output = morseToText(input);
-                break;
-            case 'textToBase64':
-                output = textToBase64(input);
-                break;
-            case 'base64ToText':
-                output = base64ToText(input);
-                break;
-            case 'textToHex':
-                output = textToHex(input);
-                break;
-            case 'hexToText':
-                output = hexToText(input);
-                break;
-            case 'caesarCipher':
-                const shift = parseInt(elements.caesarShift.value) || 0;
-                const isEncrypt = elements.caesarDirection.dataset.direction === 'encrypt';
-                output = caesarCipher(input, shift, isEncrypt);
-                break;
-            case 'rot13':
-                output = rot13(input);
-                break;
-            default:
-                throw new Error('Unknown conversion mode');
-        }
-        
-        elements.outputText.value = output;
-        addToHistory(mode, input, output);
-        showToast('Conversion completed!', 'success');
-        
+        const link = document.createElement('a');
+        link.download = `codetwix-qr-${Date.now()}.png`;
+        link.href = elements.qrCanvas.toDataURL();
+        link.click();
+        showToast('QR Code downloaded! 📥', 'success');
     } catch (error) {
-        showToast(`Error: ${error.message}`, 'error');
-        elements.outputText.value = '';
-    } finally {
-        setLoadingState(false);
+        showToast('Failed to download QR code', 'error');
     }
 }
 
-// ===================
-// EVENT LISTENERS
-// ===================
-
-/**
- * Handle custom dropdown functionality
- */
-function initializeCustomDropdown() {
-    // Check if required elements exist
-    if (!elements.dropdownTrigger || !elements.dropdownMenu || !elements.customDropdown) {
-        console.error('Custom dropdown elements not found');
-        return;
-    }
-    
-    let isOpen = false;
-    
-    // Toggle dropdown
-    elements.dropdownTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleDropdown();
-    });
-    
-    // Handle option selection
-    elements.dropdownMenu.addEventListener('click', (e) => {
-        if (e.target.classList.contains('dropdown-option')) {
-            selectOption(e.target);
-        }
-    });
-    
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!elements.customDropdown.contains(e.target) && isOpen) {
-            closeDropdown();
-        }
-    });
-    
-    // Handle keyboard navigation
-    elements.dropdownTrigger.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleDropdown();
-        } else if (e.key === 'Escape' && isOpen) {
-            closeDropdown();
-        }
-    });
-    
-    function toggleDropdown() {
-        if (isOpen) {
-            closeDropdown();
-        } else {
-            openDropdown();
-        }
-    }
-    
-    function openDropdown() {
-        isOpen = true;
-        elements.dropdownTrigger.classList.add('active');
-        elements.dropdownMenu.classList.add('show');
-        elements.dropdownTrigger.setAttribute('aria-expanded', 'true');
-        
-        // Focus first option
-        const firstOption = elements.dropdownMenu.querySelector('.dropdown-option');
-        if (firstOption) {
-            firstOption.focus();
-        }
-    }
-    
-    function closeDropdown() {
-        isOpen = false;
-        elements.dropdownTrigger.classList.remove('active');
-        elements.dropdownMenu.classList.remove('show');
-        elements.dropdownTrigger.setAttribute('aria-expanded', 'false');
-    }
-    
-    function selectOption(option) {
-        const value = option.dataset.value;
-        const text = option.textContent;
-        
-        // Update display
-        elements.selectedOption.textContent = text;
-        
-        // Update hidden select for compatibility
-        elements.conversionMode.value = value;
-        
-        // Remove previous selection
-        elements.dropdownMenu.querySelectorAll('.dropdown-option').forEach(opt => {
-            opt.classList.remove('selected');
-        });
-        
-        // Mark as selected
-        option.classList.add('selected');
-        
-        // Close dropdown
-        closeDropdown();
-        
-        // Trigger change event
-        updatePlaceholder();
-        toggleCaesarControls();
-        elements.inputText.value = '';
-        elements.outputText.value = '';
-        
-        // Show selection animation
-        elements.dropdownTrigger.style.transform = 'scale(1.05)';
-        setTimeout(() => {
-            elements.dropdownTrigger.style.transform = '';
-        }, 150);
-    }
-    
-    // Initialize first option as selected
-    const firstOption = elements.dropdownMenu.querySelector('.dropdown-option');
-    if (firstOption) {
-        firstOption.classList.add('selected');
-    }
-}
-
-/**
- * Initialize all event listeners
- */
+// Event Listeners Setup
 function initializeEventListeners() {
-    // Initialize custom dropdown
-    initializeCustomDropdown();
+    // Theme and Font Controls
+    elements.themeSelector?.addEventListener('change', (e) => themeManager.setTheme(e.target.value));
+    elements.fontSelector?.addEventListener('change', (e) => themeManager.setFont(e.target.value));
     
-    // Mode selection change (for backward compatibility)
-    elements.conversionMode.addEventListener('change', () => {
-        updatePlaceholder();
-        toggleCaesarControls();
-        elements.inputText.value = '';
-        elements.outputText.value = '';
-    });
-    
-    // Caesar cipher direction toggle
-    elements.caesarDirection.addEventListener('click', () => {
-        const current = elements.caesarDirection.dataset.direction;
-        const newDirection = current === 'encrypt' ? 'decrypt' : 'encrypt';
-        elements.caesarDirection.dataset.direction = newDirection;
-        
-        const span = elements.caesarDirection.querySelector('span');
-        span.textContent = newDirection === 'encrypt' ? '🔒 Encrypt' : '🔓 Decrypt';
-    });
-    
-    // Convert button
-    elements.convertBtn.addEventListener('click', performConversion);
-    
-    // Enter key in input textarea
-    elements.inputText.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && e.ctrlKey) {
-            e.preventDefault();
+    // Input handling with real-time conversion
+    elements.inputText?.addEventListener('input', () => {
+        clearTimeout(state.debounceTimer);
+        state.debounceTimer = setTimeout(() => {
             performConversion();
+            updateAutoDetection();
+        }, 300);
+    });
+    
+    // Cipher control buttons
+    document.querySelectorAll('.direction-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const current = btn.dataset.direction;
+            const newDirection = current === 'encrypt' ? 'decrypt' : 'encrypt';
+            btn.dataset.direction = newDirection;
+            btn.querySelector('span').textContent = newDirection === 'encrypt' ? '🔒 Encrypt' : '🔓 Decrypt';
+            performConversion();
+        });
+    });
+    
+    // Advanced features
+    elements.showBruteForce?.addEventListener('click', generateBruteForce);
+    elements.showMatrix?.addEventListener('click', generatePlayfairMatrix);
+    
+    // Panel controls
+    elements.closeBruteForce?.addEventListener('click', () => elements.bruteForcePanel.style.display = 'none');
+    elements.closeMatrix?.addEventListener('click', () => elements.matrixPanel.style.display = 'none');
+    
+    // Tool buttons
+    elements.copyBtn?.addEventListener('click', () => copyToClipboard());
+    elements.shareBtn?.addEventListener('click', generateShareLink);
+    elements.qrBtn?.addEventListener('click', generateQRCode);
+    
+    // Download menu
+    document.querySelectorAll('[data-format]').forEach(btn => {
+        btn.addEventListener('click', () => downloadFile(btn.dataset.format));
+    });
+    
+    // Download dropdown toggle
+    elements.downloadBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const downloadGroup = e.target.closest('.download-group');
+        if (downloadGroup) {
+            downloadGroup.classList.toggle('active');
         }
     });
     
-    // Auto-convert on input change (with debounce)
-    elements.inputText.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            if (elements.inputText.value.trim() && !state.isConverting) {
-                performConversion();
-            }
-        }, 1000);
+    // Close download menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.download-group')) {
+            document.querySelectorAll('.download-group').forEach(group => {
+                group.classList.remove('active');
+            });
+        }
     });
     
-    // Copy button
-    elements.copyBtn.addEventListener('click', copyToClipboard);
+    // History
+    elements.clearHistoryBtn?.addEventListener('click', historyManager.clear);
     
-    // Download button
-    elements.downloadBtn.addEventListener('click', downloadAsFile);
+    // Modal controls
+    elements.closeQrModal?.addEventListener('click', () => elements.qrModal.style.display = 'none');
+    elements.closeShareModal?.addEventListener('click', () => elements.shareModal.style.display = 'none');
+    elements.copyShareLink?.addEventListener('click', () => copyToClipboard(elements.shareLink.value));
+    elements.downloadQr?.addEventListener('click', downloadQRImage);
     
-    // Clear history button
-    elements.clearHistoryBtn.addEventListener('click', clearHistory);
-    
-    // Dark mode toggle
-    elements.darkModeToggle.addEventListener('click', toggleDarkMode);
-    
-    // Caesar shift input change
-    elements.caesarShift.addEventListener('input', () => {
-        if (elements.inputText.value.trim()) {
-            performConversion();
+    // Close modals when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            e.target.style.display = 'none';
         }
+    });
+    
+    // Cipher parameter changes
+    [elements.caesarShift, elements.vigenereKey, elements.affineA, elements.affineB, 
+     elements.playfairKey, elements.xorKey].forEach(input => {
+        input?.addEventListener('input', () => {
+            clearTimeout(state.debounceTimer);
+            state.debounceTimer = setTimeout(performConversion, 500);
+        });
     });
 }
 
-// ===================
-// INITIALIZATION
-// ===================
-
-/**
- * Initialize the application
- */
+// Initialization
 function initializeApp() {
-    // Check if all required elements exist
-    const requiredElements = [
-        'customDropdown', 'dropdownTrigger', 'dropdownMenu', 'selectedOption',
-        'conversionMode', 'clearHistoryBtn', 'darkModeToggle', 'inputText', 
-        'outputText', 'convertBtn', 'historyContainer'
-    ];
-    
-    const missingElements = requiredElements.filter(id => !elements[id]);
-    if (missingElements.length > 0) {
-        console.error('Missing required elements:', missingElements);
-        showToast('Application initialization error', 'error');
+    // Check for required elements first
+    const requiredElements = ['inputText', 'outputText', 'customDropdown', 'dropdownTrigger', 'dropdownMenu'];
+    const missing = requiredElements.filter(id => !document.getElementById(id));
+    if (missing.length > 0) {
+        console.error('Missing required elements:', missing);
         return;
     }
     
-    // Set initial theme
-    document.documentElement.setAttribute('data-theme', state.isDarkMode ? 'dark' : 'light');
-    const darkModeIcon = elements.darkModeToggle.querySelector('span');
-    if (darkModeIcon) {
-        darkModeIcon.textContent = state.isDarkMode ? '☀️' : '🌙';
-    }
+    // Set initial theme and font
+    themeManager.setTheme(state.currentTheme);
+    themeManager.setFont(state.currentFont);
     
-    // Initialize UI
-    updatePlaceholder();
-    toggleCaesarControls();
-    renderHistory();
-    
-    // Setup event listeners
+    // Initialize components
+    initializeCustomDropdown();
+    toggleCipherControls();
+    historyManager.render();
     initializeEventListeners();
     
-    // Show welcome message
-    setTimeout(() => {
-        let msg = 'Welcome to Codetwix — Your Futuristic Code Converter! ✨';
-        let i = 0;
-        const typing = setInterval(() => {
-            elements.toastMessage.textContent = msg.slice(0, ++i);
-            elements.toast.className = 'toast success show';
-            if (i >= msg.length) clearInterval(typing);
-        }, 50);
-    }, 500);
-}
-
-// ===================
-// ANIMATION FUNCTIONS
-// ===================
-
-/**
- * Create cursor-following particles
- */
-function createCursorParticle(x, y) {
-    const particle = document.createElement('div');
-    particle.className = 'cursor-particle';
-    particle.style.left = x + 'px';
-    particle.style.top = y + 'px';
-    
-    // Random color variation
-    const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981'];
-    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-    
-    document.body.appendChild(particle);
-    
-    // Remove particle after animation
-    setTimeout(() => {
-        if (particle.parentNode) {
-            particle.parentNode.removeChild(particle);
+    // Handle shared links
+    const urlParams = new URLSearchParams(window.location.search);
+    const shared = urlParams.get('share');
+    if (shared) {
+        try {
+            const data = JSON.parse(atob(shared));
+            elements.inputText.value = data.input;
+            elements.conversionMode.value = data.mode;
+            const option = elements.dropdownMenu.querySelector(`[data-value="${data.mode}"]`);
+            if (option) selectOption(option);
+            performConversion();
+        } catch (e) {
+            console.error('Invalid share link');
         }
+    }
+    
+    // Welcome message
+    setTimeout(() => {
+        showToast('Welcome to Codetwix v2.0! 🚀', 'success');
     }, 1000);
 }
 
-/**
- * Create floating background icons
- */
-function createFloatingIcon() {
-    const icons = ['💻', '🔢', '🔐', '⚡', '🚀', '✨', '🌟', '💫'];
-    const icon = document.createElement('div');
-    icon.className = 'floating-icon';
-    icon.textContent = icons[Math.floor(Math.random() * icons.length)];
-    icon.style.left = Math.random() * 100 + 'vw';
-    icon.style.animationDuration = (15 + Math.random() * 10) + 's';
-    icon.style.animationDelay = Math.random() * 5 + 's';
-    
-    document.body.appendChild(icon);
-    
-    // Remove icon after animation
-    setTimeout(() => {
-        if (icon.parentNode) {
-            icon.parentNode.removeChild(icon);
-        }
-    }, 25000);
-}
+// Global function assignments for HTML onclick handlers
+window.historyManager = historyManager;
+window.selectBruteForceResult = selectBruteForceResult;
 
-/**
- * Initialize cursor tracking
- */
-function initializeCursorEffects() {
-    let lastParticleTime = 0;
-    
-    document.addEventListener('mousemove', (e) => {
-        const now = Date.now();
-        // Throttle particle creation to avoid performance issues
-        if (now - lastParticleTime > 100) {
-            createCursorParticle(e.clientX, e.clientY);
-            lastParticleTime = now;
-        }
-    });
-    
-    // Create floating icons periodically
-    setInterval(createFloatingIcon, 3000);
-    
-    // Create initial floating icons
-    for (let i = 0; i < 3; i++) {
-        setTimeout(createFloatingIcon, i * 1000);
-    }
-}
-
-// ===================
-// APPLICATION START
-// ===================
-
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
-    initializeCursorEffects();
-});
-
-// Handle page visibility change (pause auto-convert when page is hidden)
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        // Clear any pending debounce timers when page becomes hidden
-        clearTimeout(debounceTimer);
-    }
-});
-
-// Handle keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    // Ctrl/Cmd + K to focus on input
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        elements.inputText.focus();
-    }
-    
-    // Ctrl/Cmd + Enter to convert
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        performConversion();
-    }
-    
-    // Ctrl/Cmd + D to toggle dark mode
-    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-        e.preventDefault();
-        toggleDarkMode();
-    }
-});
-
-// Export functions for potential external use or testing
-window.TextConverter = {
-    textToBinary,
-    binaryToText,
-    textToMorse,
-    morseToText,
-    textToBase64,
-    base64ToText,
-    textToHex,
-    hexToText,
-    caesarCipher,
-    rot13
-};
+// Start the application
+document.addEventListener('DOMContentLoaded', initializeApp);

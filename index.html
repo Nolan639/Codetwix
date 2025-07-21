@@ -9,23 +9,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Codetwix - Futuristic Code & Text Converter</title>
     <link rel="icon" href="https://api.iconify.design/fluent-mdl2:code.svg?color=%233b82f6">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-theme="dark" data-font="monospace">
     <div class="container">
         <header class="header">
             <div class="logo">
                 <span class="logo-icon"></span>
                 <h1>Codetwix</h1>
+                <span class="version-badge">v2.0</span>
             </div>
             <div class="controls">
-                <button id="darkModeToggle" class="btn-secondary" title="Toggle Dark Mode">
-                    <span class="dark-mode-icon">🌙</span>
-                </button>
+                <div class="control-group">
+                    <label class="control-label">Theme:</label>
+                    <select id="themeSelector" class="theme-selector">
+                        <option value="light">🌞 Light</option>
+                        <option value="dark" selected>🌚 Dark</option>
+                        <option value="hacker">💀 Hacker</option>
+                        <option value="retro">💾 Retro</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Font:</label>
+                    <select id="fontSelector" class="font-selector">
+                        <option value="monospace" selected>Monospace</option>
+                        <option value="code">Code Style</option>
+                        <option value="terminal">Terminal</option>
+                    </select>
+                </div>
             </div>
         </header>
+
         <main class="main-content">
+            <!-- Format Auto-Detection -->
+            <div class="auto-detect-section">
+                <div class="detect-indicator">
+                    <span class="detect-label">Auto-Detected Format:</span>
+                    <span id="detectedFormat" class="detected-format">None</span>
+                    <div class="confidence-meter">
+                        <div class="confidence-bar" id="confidenceBar"></div>
+                        <span class="confidence-text" id="confidenceText">0%</span>
+                    </div>
+                    <button id="overrideDetection" class="override-btn" style="display: none;">Override</button>
+                </div>
+            </div>
+
+            <!-- Mode Selector with Enhanced Options -->
             <div class="mode-selector">
                 <div class="custom-dropdown" id="customDropdown">
                     <div class="dropdown-trigger" id="dropdownTrigger" 
@@ -40,26 +70,42 @@
                     <div class="dropdown-menu" id="dropdownMenu" 
                          role="listbox" 
                          aria-label="Conversion options">
+                        
+                        <!-- Basic Text Conversions -->
                         <div class="dropdown-group">
-                            <div class="dropdown-group-header">🔁 Text Conversions</div>
+                            <div class="dropdown-group-header">🔁 Basic Conversions</div>
                             <div class="dropdown-option" data-value="textToBinary" role="option" tabindex="0">Text → Binary</div>
-                            <div class="dropdown-option" data-value="textToMorse" role="option" tabindex="0">Text → Morse</div>
-                            <div class="dropdown-option" data-value="textToBase64" role="option" tabindex="0">Text → Base64</div>
-                            <div class="dropdown-option" data-value="textToHex" role="option" tabindex="0">Text → Hexadecimal</div>
-                        </div>
-                        <div class="dropdown-divider"></div>
-                        <div class="dropdown-group">
-                            <div class="dropdown-group-header">🔃 Reverse Conversions</div>
                             <div class="dropdown-option" data-value="binaryToText" role="option" tabindex="0">Binary → Text</div>
+                            <div class="dropdown-option" data-value="textToMorse" role="option" tabindex="0">Text → Morse</div>
                             <div class="dropdown-option" data-value="morseToText" role="option" tabindex="0">Morse → Text</div>
-                            <div class="dropdown-option" data-value="base64ToText" role="option" tabindex="0">Base64 → Text</div>
+                            <div class="dropdown-option" data-value="textToHex" role="option" tabindex="0">Text → Hexadecimal</div>
                             <div class="dropdown-option" data-value="hexToText" role="option" tabindex="0">Hexadecimal → Text</div>
                         </div>
                         <div class="dropdown-divider"></div>
+
+                        <!-- Encoding & Decoding -->
                         <div class="dropdown-group">
-                            <div class="dropdown-group-header">🔒 Ciphers</div>
+                            <div class="dropdown-group-header">📦 Encoding & Decoding</div>
+                            <div class="dropdown-option" data-value="textToBase64" role="option" tabindex="0">Text → Base64</div>
+                            <div class="dropdown-option" data-value="base64ToText" role="option" tabindex="0">Base64 → Text</div>
+                            <div class="dropdown-option" data-value="textToBase32" role="option" tabindex="0">Text → Base32</div>
+                            <div class="dropdown-option" data-value="base32ToText" role="option" tabindex="0">Base32 → Text</div>
+                            <div class="dropdown-option" data-value="textToBase58" role="option" tabindex="0">Text → Base58</div>
+                            <div class="dropdown-option" data-value="base58ToText" role="option" tabindex="0">Base58 → Text</div>
+                            <div class="dropdown-option" data-value="urlEncode" role="option" tabindex="0">URL Encode</div>
+                            <div class="dropdown-option" data-value="urlDecode" role="option" tabindex="0">URL Decode</div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        
+                        <!-- Advanced Ciphers -->
+                        <div class="dropdown-group">
+                            <div class="dropdown-group-header">🔐 Advanced Ciphers</div>
                             <div class="dropdown-option" data-value="caesarCipher" role="option" tabindex="0">Caesar Cipher</div>
                             <div class="dropdown-option" data-value="rot13" role="option" tabindex="0">ROT13 Cipher</div>
+                            <div class="dropdown-option" data-value="vigenereCipher" role="option" tabindex="0">Vigenère Cipher</div>
+                            <div class="dropdown-option" data-value="affineCipher" role="option" tabindex="0">Affine Cipher</div>
+                            <div class="dropdown-option" data-value="playfairCipher" role="option" tabindex="0">Playfair Cipher</div>
+                            <div class="dropdown-option" data-value="xorEncryption" role="option" tabindex="0">XOR Encryption</div>
                         </div>
                     </div>
                 </div>
@@ -71,39 +117,130 @@
                     <option value="morseToText">Morse Code → Text</option>
                     <option value="textToBase64">Text → Base64</option>
                     <option value="base64ToText">Base64 → Text</option>
+                    <option value="textToBase32">Text → Base32</option>
+                    <option value="base32ToText">Base32 → Text</option>
+                    <option value="textToBase58">Text → Base58</option>
+                    <option value="base58ToText">Base58 → Text</option>
                     <option value="textToHex">Text → Hexadecimal</option>
                     <option value="hexToText">Hexadecimal → Text</option>
+                    <option value="urlEncode">URL Encode</option>
+                    <option value="urlDecode">URL Decode</option>
                     <option value="caesarCipher">Caesar Cipher</option>
                     <option value="rot13">ROT13 Cipher</option>
+                    <option value="vigenereCipher">Vigenère Cipher</option>
+                    <option value="affineCipher">Affine Cipher</option>
+                    <option value="playfairCipher">Playfair Cipher</option>
+                    <option value="xorEncryption">XOR Encryption</option>
                 </select>
             </div>
+
+            <!-- Advanced Cipher Controls -->
             <div id="caesarControls" class="cipher-controls" style="display: none;">
                 <label for="caesarShift" class="shift-label">Shift Key:</label>
                 <input type="number" id="caesarShift" min="-25" max="25" value="3" class="shift-input">
                 <button id="caesarDirection" class="btn-secondary direction-btn" data-direction="encrypt" title="Toggle Encrypt/Decrypt">
                     <span>🔒 Encrypt</span>
                 </button>
+                <button id="showBruteForce" class="btn-secondary">🔍 Brute Force</button>
             </div>
+
+            <div id="vigenereControls" class="cipher-controls" style="display: none;">
+                <label for="vigenereKey" class="key-label">Keyword:</label>
+                <input type="text" id="vigenereKey" placeholder="Enter keyword" class="key-input">
+                <button id="vigenereDirection" class="btn-secondary direction-btn" data-direction="encrypt" title="Toggle Encrypt/Decrypt">
+                    <span>🔒 Encrypt</span>
+                </button>
+            </div>
+
+            <div id="affineControls" class="cipher-controls" style="display: none;">
+                <label for="affineA" class="key-label">Key A:</label>
+                <input type="number" id="affineA" min="1" max="25" value="5" class="key-input">
+                <label for="affineB" class="key-label">Key B:</label>
+                <input type="number" id="affineB" min="0" max="25" value="8" class="key-input">
+                <button id="affineDirection" class="btn-secondary direction-btn" data-direction="encrypt" title="Toggle Encrypt/Decrypt">
+                    <span>🔒 Encrypt</span>
+                </button>
+            </div>
+
+            <div id="playfairControls" class="cipher-controls" style="display: none;">
+                <label for="playfairKey" class="key-label">Keyword:</label>
+                <input type="text" id="playfairKey" placeholder="Enter keyword" class="key-input">
+                <button id="playfairDirection" class="btn-secondary direction-btn" data-direction="encrypt" title="Toggle Encrypt/Decrypt">
+                    <span>🔒 Encrypt</span>
+                </button>
+                <button id="showMatrix" class="btn-secondary">📋 Show Matrix</button>
+            </div>
+
+            <div id="xorControls" class="cipher-controls" style="display: none;">
+                <label for="xorKey" class="key-label">XOR Key:</label>
+                <input type="text" id="xorKey" placeholder="Enter key" class="key-input">
+                <button id="xorDirection" class="btn-secondary direction-btn" data-direction="encrypt" title="Toggle Encrypt/Decrypt">
+                    <span>🔒 Encrypt</span>
+                </button>
+            </div>
+
+            <!-- Brute Force Panel -->
+            <div id="bruteForcePanel" class="brute-force-panel" style="display: none;">
+                <div class="panel-header">
+                    <h3>🔍 Caesar Cipher Brute Force</h3>
+                    <button id="closeBruteForce" class="close-btn">✕</button>
+                </div>
+                <div id="bruteForceResults" class="brute-force-results"></div>
+            </div>
+
+            <!-- Matrix Display Panel -->
+            <div id="matrixPanel" class="matrix-panel" style="display: none;">
+                <div class="panel-header">
+                    <h3>📋 Playfair Matrix</h3>
+                    <button id="closeMatrix" class="close-btn">✕</button>
+                </div>
+                <div id="matrixDisplay" class="matrix-display"></div>
+            </div>
+
+            <!-- Main Converter -->
             <div class="converter-panel">
                 <div class="input-section">
-                    <label for="inputText" class="section-label">Input:</label>
-                    <textarea id="inputText" class="input-textarea" placeholder="Enter your text here..." rows="6"></textarea>
-                    <button id="convertBtn" class="btn-primary convert-btn">
-                        <span class="btn-text">Convert</span>
-                        <div class="loading-spinner" style="display: none;"></div>
-                    </button>
-                </div>
-                <div class="output-section">
-                    <label for="outputText" class="section-label">Output:</label>
-                    <textarea id="outputText" class="output-textarea" readonly placeholder="Converted text will appear here..." rows="6"></textarea>
-                    <div class="output-controls">
-                        <button id="copyBtn" class="btn-secondary" title="Copy to Clipboard"><span>📋 Copy</span></button>
-                        <button id="downloadBtn" class="btn-secondary" title="Download as Text File"><span>📥 Download</span></button>
+                    <div class="section-header">
+                        <label for="inputText" class="section-label">📝 Input:</label>
+                        <div class="text-stats" id="inputStats">
+                            <span class="stat">0 chars</span>
+                            <span class="stat">0 words</span>
+                            <span class="stat">0 bits</span>
+                        </div>
+                    </div>
+                    <textarea id="inputText" class="input-textarea" placeholder="Start typing to convert instantly..." rows="6"></textarea>
+                    <div class="input-analysis" id="inputAnalysis">
+                        <div class="analysis-item">Letters: <span id="letterPercent">0%</span></div>
+                        <div class="analysis-item">Numbers: <span id="numberPercent">0%</span></div>
+                        <div class="analysis-item">Symbols: <span id="symbolPercent">0%</span></div>
                     </div>
                 </div>
+
+                <div class="output-section">
+                    <div class="section-header">
+                        <label for="outputText" class="section-label">✨ Output:</label>
+                        <div class="output-tools">
+                            <button id="copyBtn" class="btn-tool" title="Copy to Clipboard">📋</button>
+                            <button id="shareBtn" class="btn-tool" title="Generate Share Link">🔗</button>
+                            <button id="qrBtn" class="btn-tool" title="Generate QR Code">📱</button>
+                            <div class="download-group">
+                                <button id="downloadBtn" class="btn-tool dropdown-trigger" title="Download">📥</button>
+                                <div class="download-menu">
+                                    <button data-format="txt">💾 .txt</button>
+                                    <button data-format="csv">📊 .csv</button>
+                                    <button data-format="json">🔧 .json</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="outputText" class="output-textarea" readonly placeholder="Converted text will appear here..." rows="6"></textarea>
+                    <div id="asciiBreakdown" class="ascii-breakdown" style="display: none;"></div>
+                </div>
             </div>
+
+            <!-- Enhanced History Section -->
             <div class="history-section">
-                <h3 class="history-title">Recent Conversions</h3>
+                <h3 class="history-title">📚 Recent Conversions</h3>
                 <div class="history-panel">
                     <div id="historyContainer" class="history-container">
                         <p class="no-history">No recent conversions</p>
@@ -114,9 +251,39 @@
                 </div>
             </div>
         </main>
+
         <footer class="footer">
-            <p>Made with ❤️ by <a href="https://github.com/Nolan639" target="_blank" rel="noopener">Nolan639</a> | <a href="https://codetwix.github.io" target="_blank" rel="noopener">Codetwix</a></p>
+            <p>Made with ❤️ by <a href="https://github.com/Nolan639" target="_blank" rel="noopener">Nolan639</a> | <a href="https://codetwix.github.io" target="_blank" rel="noopener">Codetwix v2.0</a></p>
         </footer>
+
+        <!-- QR Code Modal -->
+        <div id="qrModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📱 QR Code</h3>
+                    <button id="closeQrModal" class="close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <canvas id="qrCanvas" class="qr-canvas"></canvas>
+                    <button id="downloadQr" class="btn-primary">Download QR Code</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Modal -->
+        <div id="shareModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>🔗 Share Link</h3>
+                    <button id="closeShareModal" class="close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="shareLink" class="share-input" readonly>
+                    <button id="copyShareLink" class="btn-primary">Copy Link</button>
+                </div>
+            </div>
+        </div>
+
         <div id="toast" class="toast"><span id="toastMessage"></span></div>
     </div>
     <script src="script.js"></script>
