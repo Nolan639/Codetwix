@@ -20,9 +20,6 @@
                 <h1>Codetwix</h1>
             </div>
             <div class="controls">
-                <button id="clearHistoryBtn" class="btn-secondary" title="Clear History">
-                    <span>🗑️</span>
-                </button>
                 <button id="darkModeToggle" class="btn-secondary" title="Toggle Dark Mode">
                     <span class="dark-mode-icon">🌙</span>
                 </button>
@@ -30,7 +27,44 @@
         </header>
         <main class="main-content">
             <div class="mode-selector">
-                <select id="conversionMode" class="mode-dropdown">
+                <div class="custom-dropdown" id="customDropdown">
+                    <div class="dropdown-trigger" id="dropdownTrigger" 
+                         role="button" 
+                         tabindex="0" 
+                         aria-haspopup="listbox" 
+                         aria-expanded="false" 
+                         aria-label="Select conversion type">
+                        <span class="selected-option">Text → Binary</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="dropdownMenu" 
+                         role="listbox" 
+                         aria-label="Conversion options">
+                        <div class="dropdown-group">
+                            <div class="dropdown-group-header">🔁 Text Conversions</div>
+                            <div class="dropdown-option" data-value="textToBinary" role="option" tabindex="0">Text → Binary</div>
+                            <div class="dropdown-option" data-value="textToMorse" role="option" tabindex="0">Text → Morse</div>
+                            <div class="dropdown-option" data-value="textToBase64" role="option" tabindex="0">Text → Base64</div>
+                            <div class="dropdown-option" data-value="textToHex" role="option" tabindex="0">Text → Hexadecimal</div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-group">
+                            <div class="dropdown-group-header">🔃 Reverse Conversions</div>
+                            <div class="dropdown-option" data-value="binaryToText" role="option" tabindex="0">Binary → Text</div>
+                            <div class="dropdown-option" data-value="morseToText" role="option" tabindex="0">Morse → Text</div>
+                            <div class="dropdown-option" data-value="base64ToText" role="option" tabindex="0">Base64 → Text</div>
+                            <div class="dropdown-option" data-value="hexToText" role="option" tabindex="0">Hexadecimal → Text</div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-group">
+                            <div class="dropdown-group-header">🔒 Ciphers</div>
+                            <div class="dropdown-option" data-value="caesarCipher" role="option" tabindex="0">Caesar Cipher</div>
+                            <div class="dropdown-option" data-value="rot13" role="option" tabindex="0">ROT13 Cipher</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Hidden select for backward compatibility -->
+                <select id="conversionMode" class="mode-dropdown" style="display: none;">
                     <option value="textToBinary">Text → Binary</option>
                     <option value="binaryToText">Binary → Text</option>
                     <option value="textToMorse">Text → Morse Code</option>
@@ -69,7 +103,12 @@
                 </div>
             </div>
             <div class="history-section">
-                <h3 class="history-title">Recent Conversions</h3>
+                <div class="history-header">
+                    <h3 class="history-title">Recent Conversions</h3>
+                    <button id="clearHistoryBtn" class="clear-history-btn" title="Clear History">
+                        <span>🧹</span>
+                    </button>
+                </div>
                 <div id="historyContainer" class="history-container">
                     <p class="no-history">No recent conversions</p>
                 </div>
