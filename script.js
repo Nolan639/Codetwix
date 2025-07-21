@@ -41,6 +41,9 @@ const state = {
     isConverting: false
 };
 
+// Global variables
+let debounceTimer;
+
 // Morse Code Dictionary
 const MORSE_CODE = {
     'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
@@ -511,6 +514,12 @@ async function performConversion() {
  * Handle custom dropdown functionality
  */
 function initializeCustomDropdown() {
+    // Check if required elements exist
+    if (!elements.dropdownTrigger || !elements.dropdownMenu || !elements.customDropdown) {
+        console.error('Custom dropdown elements not found');
+        return;
+    }
+    
     let isOpen = false;
     
     // Toggle dropdown
@@ -649,7 +658,6 @@ function initializeEventListeners() {
     });
     
     // Auto-convert on input change (with debounce)
-    let debounceTimer;
     elements.inputText.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
@@ -687,10 +695,26 @@ function initializeEventListeners() {
  * Initialize the application
  */
 function initializeApp() {
+    // Check if all required elements exist
+    const requiredElements = [
+        'customDropdown', 'dropdownTrigger', 'dropdownMenu', 'selectedOption',
+        'conversionMode', 'clearHistoryBtn', 'darkModeToggle', 'inputText', 
+        'outputText', 'convertBtn', 'historyContainer'
+    ];
+    
+    const missingElements = requiredElements.filter(id => !elements[id]);
+    if (missingElements.length > 0) {
+        console.error('Missing required elements:', missingElements);
+        showToast('Application initialization error', 'error');
+        return;
+    }
+    
     // Set initial theme
     document.documentElement.setAttribute('data-theme', state.isDarkMode ? 'dark' : 'light');
     const darkModeIcon = elements.darkModeToggle.querySelector('span');
-    darkModeIcon.textContent = state.isDarkMode ? '☀️' : '🌙';
+    if (darkModeIcon) {
+        darkModeIcon.textContent = state.isDarkMode ? '☀️' : '🌙';
+    }
     
     // Initialize UI
     updatePlaceholder();
