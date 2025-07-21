@@ -577,7 +577,7 @@ function initializeApp() {
     
     // Show welcome message
     setTimeout(() => {
-        let msg = 'Welcome to Encodify — Your Code Converter Hub! 💡';
+        let msg = 'Welcome to Codetwix — Your Futuristic Code Converter! ✨';
         let i = 0;
         const typing = setInterval(() => {
             elements.toastMessage.textContent = msg.slice(0, ++i);
@@ -588,11 +588,87 @@ function initializeApp() {
 }
 
 // ===================
+// ANIMATION FUNCTIONS
+// ===================
+
+/**
+ * Create cursor-following particles
+ */
+function createCursorParticle(x, y) {
+    const particle = document.createElement('div');
+    particle.className = 'cursor-particle';
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    
+    // Random color variation
+    const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981'];
+    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+    
+    document.body.appendChild(particle);
+    
+    // Remove particle after animation
+    setTimeout(() => {
+        if (particle.parentNode) {
+            particle.parentNode.removeChild(particle);
+        }
+    }, 1000);
+}
+
+/**
+ * Create floating background icons
+ */
+function createFloatingIcon() {
+    const icons = ['💻', '🔢', '🔐', '⚡', '🚀', '✨', '🌟', '💫'];
+    const icon = document.createElement('div');
+    icon.className = 'floating-icon';
+    icon.textContent = icons[Math.floor(Math.random() * icons.length)];
+    icon.style.left = Math.random() * 100 + 'vw';
+    icon.style.animationDuration = (15 + Math.random() * 10) + 's';
+    icon.style.animationDelay = Math.random() * 5 + 's';
+    
+    document.body.appendChild(icon);
+    
+    // Remove icon after animation
+    setTimeout(() => {
+        if (icon.parentNode) {
+            icon.parentNode.removeChild(icon);
+        }
+    }, 25000);
+}
+
+/**
+ * Initialize cursor tracking
+ */
+function initializeCursorEffects() {
+    let lastParticleTime = 0;
+    
+    document.addEventListener('mousemove', (e) => {
+        const now = Date.now();
+        // Throttle particle creation to avoid performance issues
+        if (now - lastParticleTime > 100) {
+            createCursorParticle(e.clientX, e.clientY);
+            lastParticleTime = now;
+        }
+    });
+    
+    // Create floating icons periodically
+    setInterval(createFloatingIcon, 3000);
+    
+    // Create initial floating icons
+    for (let i = 0; i < 3; i++) {
+        setTimeout(createFloatingIcon, i * 1000);
+    }
+}
+
+// ===================
 // APPLICATION START
 // ===================
 
 // Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', initializeApp);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+    initializeCursorEffects();
+});
 
 // Handle page visibility change (pause auto-convert when page is hidden)
 document.addEventListener('visibilitychange', () => {
