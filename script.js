@@ -5,6 +5,10 @@
 const elements = {
     // Mode and Controls
     conversionMode: document.getElementById('conversionMode'),
+    customDropdown: document.getElementById('customDropdown'),
+    dropdownTrigger: document.getElementById('dropdownTrigger'),
+    dropdownMenu: document.getElementById('dropdownMenu'),
+    selectedOption: document.querySelector('.selected-option'),
     caesarControls: document.getElementById('caesarControls'),
     caesarShift: document.getElementById('caesarShift'),
     caesarDirection: document.getElementById('caesarDirection'),
@@ -339,13 +343,30 @@ function escapeHtml(text) {
 }
 
 /**
- * Clear all history
+ * Clear all history with animation
  */
 function clearHistory() {
-    state.history = [];
-    localStorage.removeItem('conversionHistory');
-    renderHistory();
-    showToast('History cleared', 'success');
+    const historyItems = elements.historyContainer.querySelectorAll('.history-item');
+    
+    if (historyItems.length === 0) {
+        showToast('No history to clear', 'error');
+        return;
+    }
+    
+    // Animate out each history item
+    historyItems.forEach((item, index) => {
+        setTimeout(() => {
+            item.style.animation = 'fadeOutRight 0.4s ease-out forwards';
+        }, index * 100);
+    });
+    
+    // Clear data and update UI after animation
+    setTimeout(() => {
+        state.history = [];
+        localStorage.removeItem('conversionHistory');
+        renderHistory();
+        showToast('History cleared! 🧹', 'success');
+    }, (historyItems.length * 100) + 400);
 }
 
 /**
@@ -487,10 +508,118 @@ async function performConversion() {
 // ===================
 
 /**
+ * Handle custom dropdown functionality
+ */
+function initializeCustomDropdown() {
+    let isOpen = false;
+    
+    // Toggle dropdown
+    elements.dropdownTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleDropdown();
+    });
+    
+    // Handle option selection
+    elements.dropdownMenu.addEventListener('click', (e) => {
+        if (e.target.classList.contains('dropdown-option')) {
+            selectOption(e.target);
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!elements.customDropdown.contains(e.target) && isOpen) {
+            closeDropdown();
+        }
+    });
+    
+    // Handle keyboard navigation
+    elements.dropdownTrigger.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleDropdown();
+        } else if (e.key === 'Escape' && isOpen) {
+            closeDropdown();
+        }
+    });
+    
+    function toggleDropdown() {
+        if (isOpen) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    }
+    
+    function openDropdown() {
+        isOpen = true;
+        elements.dropdownTrigger.classList.add('active');
+        elements.dropdownMenu.classList.add('show');
+        elements.dropdownTrigger.setAttribute('aria-expanded', 'true');
+        
+        // Focus first option
+        const firstOption = elements.dropdownMenu.querySelector('.dropdown-option');
+        if (firstOption) {
+            firstOption.focus();
+        }
+    }
+    
+    function closeDropdown() {
+        isOpen = false;
+        elements.dropdownTrigger.classList.remove('active');
+        elements.dropdownMenu.classList.remove('show');
+        elements.dropdownTrigger.setAttribute('aria-expanded', 'false');
+    }
+    
+    function selectOption(option) {
+        const value = option.dataset.value;
+        const text = option.textContent;
+        
+        // Update display
+        elements.selectedOption.textContent = text;
+        
+        // Update hidden select for compatibility
+        elements.conversionMode.value = value;
+        
+        // Remove previous selection
+        elements.dropdownMenu.querySelectorAll('.dropdown-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        // Mark as selected
+        option.classList.add('selected');
+        
+        // Close dropdown
+        closeDropdown();
+        
+        // Trigger change event
+        updatePlaceholder();
+        toggleCaesarControls();
+        elements.inputText.value = '';
+        elements.outputText.value = '';
+        
+        // Show selection animation
+        elements.dropdownTrigger.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            elements.dropdownTrigger.style.transform = '';
+        }, 150);
+    }
+    
+    // Initialize first option as selected
+    const firstOption = elements.dropdownMenu.querySelector('.dropdown-option');
+    if (firstOption) {
+        firstOption.classList.add('selected');
+    }
+}
+
+/**
  * Initialize all event listeners
  */
 function initializeEventListeners() {
-    // Mode selection change
+    // Initialize custom dropdown
+    initializeCustomDropdown();
+    
+    // Mode selection change (for backward compatibility)
     elements.conversionMode.addEventListener('change', () => {
         updatePlaceholder();
         toggleCaesarControls();
@@ -537,11 +666,7 @@ function initializeEventListeners() {
     elements.downloadBtn.addEventListener('click', downloadAsFile);
     
     // Clear history button
-    elements.clearHistoryBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to clear the conversion history?')) {
-            clearHistory();
-        }
-    });
+    elements.clearHistoryBtn.addEventListener('click', clearHistory);
     
     // Dark mode toggle
     elements.darkModeToggle.addEventListener('click', toggleDarkMode);
