@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Converter - Binary, Morse, Base64 & More</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🔧</span>
+                <h1>Text Converter</h1>
+            </div>
+            <div class="controls">
+                <button id="clearHistoryBtn" class="btn-secondary" title="Clear History">
+                    <span>🗑️</span>
+                </button>
+                <button id="darkModeToggle" class="btn-secondary" title="Toggle Dark Mode">
+                    <span class="dark-mode-icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mode Selection -->
+            <div class="mode-selector">
+                <select id="conversionMode" class="mode-dropdown">
+                    <option value="textToBinary">Text → Binary</option>
+                    <option value="binaryToText">Binary → Text</option>
+                    <option value="textToMorse">Text → Morse Code</option>
+                    <option value="morseToText">Morse Code → Text</option>
+                    <option value="textToBase64">Text → Base64</option>
+                    <option value="base64ToText">Base64 → Text</option>
+                    <option value="textToHex">Text → Hexadecimal</option>
+                    <option value="hexToText">Hexadecimal → Text</option>
+                    <option value="caesarCipher">Caesar Cipher</option>
+                    <option value="rot13">ROT13 Cipher</option>
+                </select>
+            </div>
+
+            <!-- Caesar Cipher Controls -->
+            <div id="caesarControls" class="cipher-controls" style="display: none;">
+                <label for="caesarShift" class="shift-label">Shift Key:</label>
+                <input type="number" id="caesarShift" min="-25" max="25" value="3" class="shift-input">
+                <button id="caesarDirection" class="btn-secondary direction-btn" data-direction="encrypt" title="Toggle Encrypt/Decrypt">
+                    <span>🔒 Encrypt</span>
+                </button>
+            </div>
+
+            <!-- Conversion Interface -->
+            <div class="converter-panel">
+                <div class="input-section">
+                    <label for="inputText" class="section-label">Input:</label>
+                    <textarea 
+                        id="inputText" 
+                        class="input-textarea" 
+                        placeholder="Enter your text here..."
+                        rows="6"
+                    ></textarea>
+                    <button id="convertBtn" class="btn-primary convert-btn">
+                        <span class="btn-text">Convert</span>
+                        <div class="loading-spinner" style="display: none;"></div>
+                    </button>
+                </div>
+
+                <div class="output-section">
+                    <label for="outputText" class="section-label">Output:</label>
+                    <textarea 
+                        id="outputText" 
+                        class="output-textarea" 
+                        readonly 
+                        placeholder="Converted text will appear here..."
+                        rows="6"
+                    ></textarea>
+                    <div class="output-controls">
+                        <button id="copyBtn" class="btn-secondary" title="Copy to Clipboard">
+                            <span>📋 Copy</span>
+                        </button>
+                        <button id="downloadBtn" class="btn-secondary" title="Download as Text File">
+                            <span>📥 Download</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="history-section">
+                <h3 class="history-title">Recent Conversions</h3>
+                <div id="historyContainer" class="history-container">
+                    <p class="no-history">No recent conversions</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Made with ❤️ by <a href="https://github.com/yourusername" target="_blank" rel="noopener">Your Name</a></p>
+        </footer>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast">
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
