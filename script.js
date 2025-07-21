@@ -57,7 +57,6 @@ const elements = {
     inputText: document.getElementById('inputText'),
     outputText: document.getElementById('outputText'),
     inputStats: document.getElementById('inputStats'),
-    inputAnalysis: document.getElementById('inputAnalysis'),
     letterPercent: document.getElementById('letterPercent'),
     numberPercent: document.getElementById('numberPercent'),
     symbolPercent: document.getElementById('symbolPercent'),
@@ -147,7 +146,13 @@ const converters = {
     
     // Encoding & Decoding
     textToBase64: (text) => btoa(unescape(encodeURIComponent(text))),
-    base64ToText: (base64) => decodeURIComponent(escape(atob(base64))),
+    base64ToText: (base64) => {
+        try {
+            return decodeURIComponent(escape(atob(base64)));
+        } catch (error) {
+            throw new Error('Invalid Base64 input');
+        }
+    },
     
     textToBase32: (text) => {
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -183,6 +188,7 @@ const converters = {
     },
     
     textToBase58: (text) => {
+        if (!text) return '';
         const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
         const bytes = new TextEncoder().encode(text);
         let num = BigInt(0);
@@ -198,6 +204,7 @@ const converters = {
     },
     
     base58ToText: (base58) => {
+        if (!base58) return '';
         const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
         let num = BigInt(0);
         for (let char of base58) {
@@ -214,7 +221,13 @@ const converters = {
     },
     
     urlEncode: (text) => encodeURIComponent(text),
-    urlDecode: (text) => decodeURIComponent(text),
+    urlDecode: (text) => {
+        try {
+            return decodeURIComponent(text);
+        } catch (error) {
+            throw new Error('Invalid URL encoded text');
+        }
+    },
     
     // Advanced Ciphers
     caesarCipher: (text, shift, encrypt = true) => {
@@ -844,8 +857,9 @@ function generateBruteForce() {
     let resultsHTML = '';
     for (let shift = 1; shift <= 25; shift++) {
         const result = converters.caesarCipher(input, shift, false);
+        const escapedResult = result.replace(/'/g, "\\'").replace(/"/g, '\\"');
         resultsHTML += `
-            <div class="brute-force-item" onclick="selectBruteForceResult('${escapeHtml(result)}')">
+            <div class="brute-force-item" onclick="selectBruteForceResult('${escapedResult}')">
                 <span>Shift ${shift}:</span>
                 <span>${escapeHtml(result.substring(0, 50))}${result.length > 50 ? '...' : ''}</span>
             </div>
@@ -856,7 +870,7 @@ function generateBruteForce() {
 }
 
 function selectBruteForceResult(result) {
-    elements.outputText.value = result;
+    elements.outputText.value = result.replace(/\\'/g, "'").replace(/\\"/g, '"'); // Fix escaped quotes
     elements.bruteForcePanel.style.display = 'none';
 }
 
@@ -977,9 +991,19 @@ function generateQRCode() {
         return;
     }
     
+    if (!elements.qrCanvas) {
+        showToast('QR Canvas not available', 'error');
+        return;
+    }
+    
     // Simple QR code generation (you might want to use a library like qrcode.js)
     const canvas = elements.qrCanvas;
     const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        showToast('Canvas context not available', 'error');
+        return;
+    }
+    
     canvas.width = 200;
     canvas.height = 200;
     
@@ -993,6 +1017,23 @@ function generateQRCode() {
     ctx.fillText('(Use QR library)', 10, 180);
     
     elements.qrModal.style.display = 'flex';
+}
+
+function downloadQRImage() {
+    if (!elements.qrCanvas) {
+        showToast('No QR code to download', 'error');
+        return;
+    }
+    
+    try {
+        const link = document.createElement('a');
+        link.download = `codetwix-qr-${Date.now()}.png`;
+        link.href = elements.qrCanvas.toDataURL();
+        link.click();
+        showToast('QR Code downloaded! 📥', 'success');
+    } catch (error) {
+        showToast('Failed to download QR code', 'error');
+    }
 }
 
 // Event Listeners Setup
@@ -1039,6 +1080,24 @@ function initializeEventListeners() {
         btn.addEventListener('click', () => downloadFile(btn.dataset.format));
     });
     
+    // Download dropdown toggle
+    elements.downloadBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const downloadGroup = e.target.closest('.download-group');
+        if (downloadGroup) {
+            downloadGroup.classList.toggle('active');
+        }
+    });
+    
+    // Close download menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.download-group')) {
+            document.querySelectorAll('.download-group').forEach(group => {
+                group.classList.remove('active');
+            });
+        }
+    });
+    
     // History
     elements.clearHistoryBtn?.addEventListener('click', historyManager.clear);
     
@@ -1046,6 +1105,14 @@ function initializeEventListeners() {
     elements.closeQrModal?.addEventListener('click', () => elements.qrModal.style.display = 'none');
     elements.closeShareModal?.addEventListener('click', () => elements.shareModal.style.display = 'none');
     elements.copyShareLink?.addEventListener('click', () => copyToClipboard(elements.shareLink.value));
+    elements.downloadQr?.addEventListener('click', downloadQRImage);
+    
+    // Close modals when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            e.target.style.display = 'none';
+        }
+    });
     
     // Cipher parameter changes
     [elements.caesarShift, elements.vigenereKey, elements.affineA, elements.affineB, 
@@ -1059,6 +1126,14 @@ function initializeEventListeners() {
 
 // Initialization
 function initializeApp() {
+    // Check for required elements first
+    const requiredElements = ['inputText', 'outputText', 'customDropdown', 'dropdownTrigger', 'dropdownMenu'];
+    const missing = requiredElements.filter(id => !document.getElementById(id));
+    if (missing.length > 0) {
+        console.error('Missing required elements:', missing);
+        return;
+    }
+    
     // Set initial theme and font
     themeManager.setTheme(state.currentTheme);
     themeManager.setFont(state.currentFont);

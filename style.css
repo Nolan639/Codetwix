@@ -772,7 +772,8 @@ body::before {
     min-width: 120px;
 }
 
-.download-group:hover .download-menu {
+.download-group:hover .download-menu,
+.download-group.active .download-menu {
     display: block;
 }
 
