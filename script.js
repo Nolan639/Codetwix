@@ -143,7 +143,8 @@ const converters = {
         '----.': '9'
     };
     return morse.split(' ').map(code => REVERSE_MORSE[code] || code).join('');
-}, // <-- Add this comma
+}, }, // end of morseToText
+textToHex: (text) => text.split('').map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').toUpperCase(),// <-- Add this comma
 textToHex: (text) => // ...
     textToHex: (text) => text.split('').map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').toUpperCase(),
     hexToText: (hex) => {
