@@ -143,10 +143,8 @@ const converters = {
         '----.': '9'
     };
     return morse.split(' ').map(code => REVERSE_MORSE[code] || code).join('');
-}, }, // end of morseToText
-textToHex: (text) => text.split('').map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').toUpperCase(),// <-- Add this comma
-textToHex: (text) => // ...
-    textToHex: (text) => text.split('').map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').toUpperCase(),
+},  // single closing brace and comma for morseToText
+textToHex: (text) => text.split('').map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').toUpperCase(),
     hexToText: (hex) => {
         const cleanHex = hex.replace(/[^0-9A-Fa-f\s]/g, '');
         if (!cleanHex) throw new Error('Invalid hex input');
