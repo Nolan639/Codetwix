@@ -124,18 +124,27 @@ const converters = {
         };
         return text.toUpperCase().split('').map(char => MORSE_CODE[char] || char).join(' ');
     },
-    
     morseToText: (morse) => {
-        const REVERSE_MORSE = {
-            '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E', '..-.': 'F',
-            '--.': 'G', '....': 'H', '..': 'I', '.---': 'J', '-.-': 'K', '.-..': 'L',
-            '--': 'M', '-.': 'N', '---': 'O', '.--.': 'P', '--.-': 'Q', '.-.': 'R',
-            '...': 'S', '-': 'T', '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X',
-            '-.--': 'Y', '--..': 'Z', '/': ' '
-        };
-        return morse.split(' ').map(code => REVERSE_MORSE[code] || code).join('');
-    },
-    
+    const REVERSE_MORSE = {
+        '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E', '..-.': 'F',
+        '--.': 'G', '....': 'H', '..': 'I', '.---': 'J', '-.-': 'K', '.-..': 'L',
+        '--': 'M', '-.': 'N', '---': 'O', '.--.': 'P', '--.-': 'Q', '.-.': 'R',
+        '...': 'S', '-': 'T', '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X',
+        '-.--': 'Y', '--..': 'Z', '/': ' ',
+        // Add these number mappings:
+        '-----': '0',
+        '.----': '1',
+        '..---': '2',
+        '...--': '3',
+        '....-': '4',
+        '.....': '5',
+        '-....': '6',
+        '--...': '7',
+        '---..': '8',
+        '----.': '9'
+    };
+    return morse.split(' ').map(code => REVERSE_MORSE[code] || code).join('');
+}
     textToHex: (text) => text.split('').map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join(' ').toUpperCase(),
     hexToText: (hex) => {
         const cleanHex = hex.replace(/[^0-9A-Fa-f\s]/g, '');
