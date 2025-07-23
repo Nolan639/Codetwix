@@ -311,16 +311,130 @@
 
         <div id="toast" class="toast"><span id="toastMessage"></span></div>
     </div>
-  <section style="max-width: 800px; margin: auto; padding: 20px;">
-  <h1>Codetwix – Online Text Converter & Cipher Tools</h1>
-  <p>
-    Codetwix is your all-in-one tool for converting and encoding text formats. Instantly convert:
-    <strong>text to Base64</strong>, <strong>Binary</strong>, <strong>Morse Code</strong>, <strong>Hexadecimal</strong>,
-    and decode them back just as easily. We also support powerful ciphers like <strong>Caesar Cipher</strong>,
-    <strong>XOR encryption</strong>, <strong>Affine Cipher</strong>, <strong>Playfair</strong>, <strong>ROT13</strong>, and
-    <strong>Vigenère Cipher</strong>. Built for developers, students, and crypto fans who want fast and easy conversions online.
-  </p>
-</section>
+  <!-- Text to Binary Converter Content for SEO-Optimized Collapsible Sections -->
+<style>
+  .tool-content details {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 1em;
+    padding: 0.5em;
+    transition: background 0.2s ease-in-out;
+  }
+  .tool-content summary {
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0.5em;
+    border-radius: 6px;
+    list-style: none;
+  }
+  .tool-content summary:hover {
+    background-color: #f0f0f0;
+  }
+  .tool-content summary::-webkit-details-marker {
+    display: none;
+  }
+  .tool-content summary:before {
+    content: "▶ ";
+    display: inline-block;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease-in-out;
+  }
+  .tool-content details[open] summary:before {
+    transform: rotate(90deg);
+  }
+</style>
+
+<div class="tool-content">
+  <h1>Text to Binary Converter</h1>
+  <p>Welcome! This tool helps you turn plain text into binary code—the way computers talk. No jargon, just simple steps.</p>
+
+  <details>
+    <summary>How to Use Text to Binary Converter?</summary>
+    <p>
+      1. Type or paste your text into the input box.<br>
+      2. Click “Convert” (or it may convert automatically).<br>
+      3. The binary output appears instantly below.<br>
+      4. Copy the binary code and use it anywhere you like!
+    </p>
+    <p>
+      Example: If you type “Hi”, the converter shows:<br>
+      <code>01001000 01101001</code>
+    </p>
+  </details>
+
+  <details>
+    <summary>Features of Text to Binary Converter</summary>
+    <p>
+      • <strong>Instant Conversion</strong>: No waiting—your text becomes binary as you type.<br>
+      • <strong>Copy & Share</strong>: One-click copy button and share link.<br>
+      • <strong>Download</strong>: Save your binary as a .txt file.<br>
+      • <strong>Theme & Font</strong>: Toggle dark/light mode and choose a coding font.<br>
+      • <strong>Auto-Detect</strong>: The tool guesses if your input is text or binary and flips modes.
+    </p>
+  </details>
+
+  <details>
+    <summary>How to Convert Manually?</summary>
+    <p>
+      Converting by hand is a fun way to learn:<br>
+      1. Look up each letter’s ASCII code (for example, “A” = 65).<br>
+      2. Turn the number into binary: divide by 2, note remainders, read them backwards.<br>
+      3. Pad to 8 bits (eight 0s or 1s).<br>
+      4. Write all 8-bit groups with a space between.
+    </p>
+    <p>
+      Manual Example: “C” → ASCII 67 → binary steps:<br>
+      67 ÷ 2 = 33 r1<br>
+      33 ÷ 2 = 16 r1<br>
+      16 ÷ 2 = 8 r0<br>
+      8 ÷ 2 = 4 r0<br>
+      4 ÷ 2 = 2 r0<br>
+      2 ÷ 2 = 1 r0<br>
+      1 ÷ 2 = 0 r1 → read remainders upward: <code>1000011</code> → pad → <code>01000011</code>
+    </p>
+  </details>
+
+  <details>
+    <summary>How the Conversion System Works</summary>
+    <p>
+      Under the hood, every character is stored as an ASCII code—a number from 0–127. Computers use binary (0s and 1s) to represent these numbers. Our converter:
+      <ol>
+        <li>Finds each character’s ASCII value.</li>
+        <li>Converts that value into an 8-bit binary string.</li>
+        <li>Joins all those strings with spaces.</li>
+      </ol>
+    </p>
+  </details>
+
+  <details>
+    <summary>Where is Binary Used?</summary>
+    <p>
+      • <strong>Computers & Electronics</strong>: All data in CPUs, memory, and storage is binary.<br>
+      • <strong>Networking</strong>: Binary packets travel the internet.<br>
+      • <strong>Embedded Systems</strong>: Tiny devices like smartwatches read and write binary.<br>
+      • <strong>Learning & Fun</strong>: Great for coding practice and puzzles!
+    </p>
+  </details>
+
+  <details>
+    <summary>Bonus: ASCII Table (Partial)</summary>
+    <table>
+      <tr><th>Char</th><th>ASCII</th><th>Binary</th></tr>
+      <tr><td>A</td><td>65</td><td>01000001</td></tr>
+      <tr><td>H</td><td>72</td><td>01001000</td></tr>
+      <tr><td>i</td><td>105</td><td>01101001</td></tr>
+      <tr><td>!</td><td>33</td><td>00100001</td></tr>
+    </table>
+    <p><em>Tip:</em> Hover over any row to highlight it. (Add your own CSS: <code>tr:hover { background: #eef; }</code>)</p>
+  </details>
+
+  <details>
+    <summary>Fun Fact</summary>
+    <p>
+      Did you know? The first ASCII message ever sent over a network was “LO” in 1969—part of an attempt to log into a computer. They tried “LOGIN” but the system crashed after “LO” (hence it lives on as the word “hello”). 😊
+    </p>
+  </details>
+</div>
     <script src="script.js"></script>
 </body>
 </html>
